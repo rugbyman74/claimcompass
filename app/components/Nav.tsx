@@ -56,7 +56,6 @@ export default function Nav() {
 
     return () => sub.subscription.unsubscribe();
   }, []);
-
   const logout = async () => {
     await supabase.auth.signOut();
     window.location.href = "/login";
@@ -81,6 +80,7 @@ export default function Nav() {
           <NavLink href="/statement">Statement</NavLink>
           <NavLink href="/vault">Vault</NavLink>
           <NavLink href="/refer">Refer</NavLink>
+          <NavLink href="/settings">Settings</NavLink>
           {showDevLink ? <NavLink href="/dev">Dev</NavLink> : null}
         </nav>
 
@@ -110,6 +110,7 @@ export default function Nav() {
           <NavLink href="/statement">Statement</NavLink>
           <NavLink href="/vault">Vault</NavLink>
           <NavLink href="/refer">Refer</NavLink>
+          <NavLink href="/settings">Settings</NavLink>
           {showDevLink ? <NavLink href="/dev">Dev</NavLink> : null}
         </div>
       </div>
