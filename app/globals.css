@@ -34,7 +34,7 @@ body::before {
   width: 100%;
   height: 100%;
   z-index: -1;
-  opacity: 0.08;
+  opacity: 0.12;
   background: 
     linear-gradient(135deg, 
       #B22234 0%, 
@@ -65,9 +65,26 @@ body::after {
   width: 100%;
   height: 100%;
   z-index: -1;
-  opacity: 0.04;
+  opacity: 0.06;
   background-image: 
-    repeating-linear-gradient(0deg, transparent, transparent 35px, rgba(178, 34, 52, 0.15) 35px, rgba(178, 34, 52, 0.15) 70px),
-    repeating-linear-gradient(90deg, transparent, transparent 35px, rgba(60, 59, 110, 0.15) 35px, rgba(60, 59, 110, 0.15) 70px);
+    repeating-linear-gradient(0deg, transparent, transparent 35px, rgba(178, 34, 52, 0.2) 35px, rgba(178, 34, 52, 0.2) 70px),
+    repeating-linear-gradient(90deg, transparent, transparent 35px, rgba(60, 59, 110, 0.2) 35px, rgba(60, 59, 110, 0.2) 70px);
   pointer-events: none;
+}
+
+/* Mobile enhancement - more visible background */
+@media (max-width: 768px) {
+  body::before {
+    opacity: 0.18;
+  }
+  
+  body::after {
+    opacity: 0.09;
+  }
+}
+
+/* Patriotic accent borders for cards */
+.patriotic-card {
+  border-top: 3px solid transparent;
+  border-image: linear-gradient(to right, #B22234, #FFFFFF, #3C3B6E) 1;
 }
