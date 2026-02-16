@@ -103,7 +103,7 @@ export default function DashboardPage() {
 
     setLoggedToday(!!todayRow?.id);
 
-    // Evidence vault count (safe to attempt; if table doesn't exist yet, show —)
+    // Evidence vault count
     const { count: vaultTotal, error: vaultErr } = await supabase
       .from("evidence_files")
       .select("*", { count: "exact", head: true });
@@ -111,7 +111,7 @@ export default function DashboardPage() {
     if (vaultErr) setVaultCount(null);
     else setVaultCount(vaultTotal ?? 0);
 
-    // Referrals count (safe to attempt)
+    // Referrals count
     const { count: refTotal, error: refErr } = await supabase
       .from("referrals")
       .select("*", { count: "exact", head: true });
@@ -130,7 +130,7 @@ export default function DashboardPage() {
   if (loading) {
     return (
       <div className="mx-auto max-w-5xl">
-        <div className="rounded-2xl border bg-white p-8 shadow-sm">
+        <div className="rounded-2xl border bg-white p-8 shadow-sm" style={{borderTop: '3px solid #B22234'}}>
           <div className="text-sm text-zinc-600">Loading dashboard…</div>
         </div>
       </div>
@@ -176,12 +176,12 @@ export default function DashboardPage() {
       </div>
 
       {/* Today card */}
-      <div className="rounded-2xl border bg-white p-6 shadow-sm">
+      <div className="rounded-2xl border bg-white p-6 shadow-sm" style={{borderTop: '3px solid #3C3B6E'}}>
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
             <div className="text-sm font-semibold text-zinc-900">Today</div>
             <div className="mt-1 text-sm text-zinc-600">
-              {loggedToday ? "You’ve logged symptoms today." : "No entry logged for today yet."}
+              {loggedToday ? "You've logged symptoms today." : "No entry logged for today yet."}
             </div>
           </div>
 
@@ -190,7 +190,7 @@ export default function DashboardPage() {
               href="/log"
               className="rounded-lg bg-zinc-900 px-4 py-2 text-sm font-semibold text-white hover:bg-zinc-800"
             >
-              {loggedToday ? "View / Edit logs" : "Add today’s log"}
+              {loggedToday ? "View / Edit logs" : "Add today's log"}
             </Link>
 
             <button
@@ -225,13 +225,13 @@ export default function DashboardPage() {
 
       {/* Stats */}
       <div className="grid gap-6 md:grid-cols-3">
-        <div className="rounded-2xl border bg-white p-6 shadow-sm">
+        <div className="rounded-2xl border bg-white p-6 shadow-sm" style={{borderTop: '3px solid #B22234'}}>
           <div className="text-sm text-zinc-500">Symptom logs</div>
           <div className="mt-2 text-3xl font-semibold">{logCount}</div>
           <div className="mt-2 text-xs text-zinc-500">Consistency builds stronger evidence.</div>
         </div>
 
-        <div className="rounded-2xl border bg-white p-6 shadow-sm">
+        <div className="rounded-2xl border bg-white p-6 shadow-sm" style={{borderTop: '3px solid #FFFFFF', borderTopWidth: '3px', borderTopStyle: 'solid', borderTopColor: '#ddd'}}>
           <div className="text-sm text-zinc-500">Evidence files</div>
           <div className="mt-2 text-3xl font-semibold">
             {vaultCount === null ? "—" : vaultCount}
@@ -241,7 +241,7 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        <div className="rounded-2xl border bg-white p-6 shadow-sm">
+        <div className="rounded-2xl border bg-white p-6 shadow-sm" style={{borderTop: '3px solid #3C3B6E'}}>
           <div className="text-sm text-zinc-500">Referrals</div>
           <div className="mt-2 text-3xl font-semibold">{refCount === null ? "—" : refCount}</div>
           <div className="mt-2 text-xs text-zinc-500">Rewards activate at launch.</div>
@@ -253,6 +253,7 @@ export default function DashboardPage() {
         <Link
           href="/log"
           className="rounded-2xl border bg-white p-6 shadow-sm hover:border-zinc-400 transition"
+          style={{borderLeft: '4px solid #B22234'}}
         >
           <div className="text-lg font-semibold">Symptom Log</div>
           <div className="mt-2 text-sm text-zinc-600">Add, edit, and delete entries.</div>
@@ -261,6 +262,7 @@ export default function DashboardPage() {
         <Link
           href="/statement"
           className="rounded-2xl border bg-white p-6 shadow-sm hover:border-zinc-400 transition"
+          style={{borderLeft: '4px solid #3C3B6E'}}
         >
           <div className="flex items-center justify-between gap-2">
             <div className="text-lg font-semibold">Statement</div>
@@ -276,6 +278,7 @@ export default function DashboardPage() {
         <Link
           href="/vault"
           className="rounded-2xl border bg-white p-6 shadow-sm hover:border-zinc-400 transition"
+          style={{borderLeft: '4px solid #B22234'}}
         >
           <div className="flex items-center justify-between gap-2">
             <div className="text-lg font-semibold">Evidence Vault</div>
@@ -291,6 +294,7 @@ export default function DashboardPage() {
         <Link
           href="/refer"
           className="rounded-2xl border bg-white p-6 shadow-sm hover:border-zinc-400 transition"
+          style={{borderLeft: '4px solid #3C3B6E'}}
         >
           <div className="text-lg font-semibold">Refer</div>
           <div className="mt-2 text-sm text-zinc-600">Share your referral link.</div>
@@ -298,7 +302,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Recent activity */}
-      <section className="rounded-2xl border bg-white p-6 shadow-sm">
+      <section className="rounded-2xl border bg-white p-6 shadow-sm" style={{borderTop: '3px solid #B22234'}}>
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div>
             <h2 className="text-lg font-semibold tracking-tight">Recent activity</h2>
