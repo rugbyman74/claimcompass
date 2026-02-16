@@ -5,6 +5,7 @@ import { supabase } from "@/lib/supabaseClient";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { getProStatus } from "@/lib/pro";
+import { checkAndAwardBadges, getUserBadges } from "@/lib/badges";
 
 type SymptomLog = {
   id: string;
@@ -14,6 +15,15 @@ type SymptomLog = {
   notes: string | null;
   logged_at: string;
   created_at: string;
+};
+
+type UserBadge = {
+  id: string;
+  badge_id: string;
+  badge_name: string;
+  badge_description: string;
+  badge_icon: string;
+  earned_at: string;
 };
 
 function todayISO() {
@@ -48,6 +58,9 @@ export default function DashboardPage() {
   const [recentLogs, setRecentLogs] = useState<SymptomLog[]>([]);
   const [loggedToday, setLoggedToday] = useState<boolean>(false);
 
+  const [badges, setBadges] = useState<UserBadge[]>([]);
+  const [newBadges, setNewBadges] = useState<string[]>([]);
+
   const planLabel = useMemo(() => (isPro ? "Pro" : "Free"), [isPro]);
 
   const load = async () => {
@@ -60,6 +73,8 @@ export default function DashboardPage() {
       router.replace("/login");
       return;
     }
+
+    const userId = session.user.id;
 
     const meta = (session.user.user_metadata ?? {}) as Record<string, any>;
     const autoName =
@@ -74,6 +89,16 @@ export default function DashboardPage() {
     const pro = await getProStatus();
     setIsPro(pro.isPro);
     setProLoaded(true);
+
+    // Check and award badges
+    const badgeResult = await checkAndAwardBadges(userId);
+    if (badgeResult.newBadges.length > 0) {
+      setNewBadges(badgeResult.newBadges.map((b) => b.name));
+    }
+
+    // Get user's badges
+    const userBadges = await getUserBadges(userId);
+    setBadges(userBadges);
 
     // Log count
     const { count: logsTotal } = await supabase
@@ -174,6 +199,54 @@ export default function DashboardPage() {
           )}
         </div>
       </div>
+
+      {/* New badges notification */}
+      {newBadges.length > 0 ? (
+        <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-5">
+          <div className="flex items-start gap-3">
+            <div className="text-2xl">🎖️</div>
+            <div>
+              <div className="text-sm font-semibold text-emerald-900">New Badge{newBadges.length > 1 ? 's' : ''} Earned!</div>
+              <div className="mt-1 text-sm text-emerald-900">
+                Congratulations! You earned: <strong>{newBadges.join(", ")}</strong>
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {/* Badges section */}
+      {badges.length > 0 ? (
+        <section className="rounded-2xl border bg-white p-6 shadow-sm" style={{borderTop: '3px solid #3C3B6E'}}>
+          <div className="flex items-end justify-between gap-4">
+            <div>
+              <h2 className="text-lg font-semibold tracking-tight">Your Badges</h2>
+              <p className="mt-1 text-sm text-zinc-600">
+                {badges.length} badge{badges.length !== 1 ? 's' : ''} earned
+              </p>
+            </div>
+            <Link
+              href="/badges"
+              className="rounded-lg border border-zinc-200 bg-white px-4 py-2 text-sm font-semibold text-zinc-900 hover:bg-zinc-50"
+            >
+              View all
+            </Link>
+          </div>
+
+          <div className="mt-4 flex flex-wrap gap-3">
+            {badges.slice(0, 6).map((badge) => (
+              <div
+                key={badge.id}
+                className="flex items-center gap-2 rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-2"
+                title={badge.badge_description}
+              >
+                <span className="text-xl">{badge.badge_icon}</span>
+                <span className="text-sm font-medium text-zinc-900">{badge.badge_name}</span>
+              </div>
+            ))}
+          </div>
+        </section>
+      ) : null}
 
       {/* Today card */}
       <div className="rounded-2xl border bg-white p-6 shadow-sm" style={{borderTop: '3px solid #3C3B6E'}}>
