@@ -1,12 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { useSearchParams } from "next/navigation";
 
 const STORAGE_KEY = "claimcompass_pending_ref";
 
-export default function LoginPage() {
+function LoginForm() {
   const searchParams = useSearchParams();
 
   const [mode, setMode] = useState<"login" | "signup">("login");
@@ -53,7 +53,7 @@ export default function LoginPage() {
 
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) setStatus(`❌ ${error.message}`);
-    else window.location.href = "/dashboard";
+    else window.location.href = "/log";
   };
 
   return (
@@ -139,8 +139,22 @@ export default function LoginPage() {
       </div>
 
       <div className="mt-4 text-xs text-zinc-500">
-        Tip: For testing, don’t reuse a sensitive password.
+        Tip: For testing, don't reuse a sensitive password.
       </div>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={
+      <div className="mx-auto max-w-md">
+        <div className="rounded-2xl border bg-white p-6 shadow-sm">
+          <div className="text-sm text-zinc-600">Loading...</div>
+        </div>
+      </div>
+    }>
+      <LoginForm />
+    </Suspense>
   );
 }
