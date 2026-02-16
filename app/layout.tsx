@@ -18,6 +18,13 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "ClaimCompass",
   description: "A secure VA claim organizer for symptom logs, statements, and evidence storage.",
+  manifest: "/manifest.json",
+  themeColor: "#3C3B6E",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "ClaimCompass",
+  },
 };
 
 export default function RootLayout({

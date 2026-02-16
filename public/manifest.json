@@ -1,0 +1,10 @@
+{
+  "name": "ClaimCompass",
+  "short_name": "ClaimCompass",
+  "description": "VA claim organizer for veterans",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#3C3B6E",
+  "orientation": "portrait"
+}
