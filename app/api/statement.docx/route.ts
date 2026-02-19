@@ -77,8 +77,9 @@ export async function POST(req: Request) {
 
   // Generate buffer
   const buffer = await Packer.toBuffer(doc);
+  const nodeBuffer = Buffer.from(buffer);
 
-  return new NextResponse(buffer, {
+  return new NextResponse(nodeBuffer, {
     status: 200,
     headers: {
       "Content-Type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
