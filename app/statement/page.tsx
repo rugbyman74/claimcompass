@@ -25,7 +25,7 @@ export default function StatementPage() {
   const router = useRouter();
   const [status, setStatus] = useState("");
   const [logs, setLogs] = useState<SymptomLog[]>([]);
-  const [fullName, setFullName] = useState(""); // auto-filled from user metadata
+  const [fullName, setFullName] = useState("");
   const [claimFor, setClaimFor] = useState("");
 
   const [isPro, setIsPro] = useState(false);
@@ -45,7 +45,6 @@ export default function StatementPage() {
       return;
     }
 
-    // Auto-fill name from auth metadata (or fallback to email)
     const meta = (session.user.user_metadata ?? {}) as Record<string, any>;
     const autoName =
       (typeof meta.full_name === "string" && meta.full_name.trim()) ||
@@ -187,13 +186,56 @@ export default function StatementPage() {
     setStatus("✅ PDF downloaded.");
   };
 
+  const downloadWord = async () => {
+    setStatus("");
+
+    if (!statementText.trim()) {
+      setStatus("❌ Nothing to export yet.");
+      return;
+    }
+
+    if (!isPro) {
+      setStatus("⭐ Pro required to download Word document. You can still copy the text for free.");
+      return;
+    }
+
+    const res = await fetch("/api/statement-docx", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        title: "STATEMENT IN SUPPORT OF CLAIM",
+        filename: "ClaimCompass-Statement.docx",
+        content: statementText,
+      }),
+    });
+
+    if (!res.ok) {
+      const msg = await res.text();
+      setStatus("❌ Word export failed: " + msg);
+      return;
+    }
+
+    const blob = await res.blob();
+    const url = window.URL.createObjectURL(blob);
+
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "ClaimCompass-Statement.docx";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+
+    window.URL.revokeObjectURL(url);
+    setStatus("✅ Word document downloaded.");
+  };
+
   return (
     <div className="grid gap-6">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">Statement Generator</h1>
           <p className="mt-1 text-sm text-zinc-600">
-            Builds a structured statement from your last 30 days of logs — then exports as PDF.
+            Builds a structured statement from your last 30 days of logs – then exports as PDF or Word.
           </p>
         </div>
 
@@ -219,9 +261,9 @@ export default function StatementPage() {
 
       {!isPro ? (
         <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
-          <div className="font-semibold">Pro feature: PDF export</div>
+          <div className="font-semibold">Pro feature: PDF & Word export</div>
           <div className="mt-1">
-            You can generate and copy your statement text for free. Downloading a formatted PDF is available on Pro.
+            You can generate and copy your statement text for free. Downloading as PDF or Word document is available on Pro.
           </div>
           <div className="mt-3">
             <Link
@@ -239,7 +281,7 @@ export default function StatementPage() {
           <div className="grid gap-1">
             <span className="text-xs font-medium text-zinc-700">Veteran name</span>
             <div className="rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-2 text-sm text-zinc-800">
-              {fullName || "—"}
+              {fullName || "–"}
             </div>
             <div className="text-xs text-zinc-500">Auto-filled from your account profile.</div>
           </div>
@@ -281,6 +323,18 @@ export default function StatementPage() {
             }`}
           >
             Download PDF {isPro ? "" : " (Pro)"}
+          </button>
+
+          <button
+            onClick={downloadWord}
+            disabled={!statementText.trim()}
+            className={`rounded-lg px-4 py-2 text-sm font-semibold disabled:opacity-50 ${
+              isPro
+                ? "border border-zinc-200 bg-white text-zinc-900 hover:bg-zinc-50"
+                : "border border-amber-200 bg-amber-50 text-amber-900 hover:bg-amber-100"
+            }`}
+          >
+            Download Word {isPro ? "" : " (Pro)"}
           </button>
 
           {status ? (
