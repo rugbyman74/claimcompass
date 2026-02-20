@@ -41,6 +41,16 @@ export default function RootLayout({
 
         <footer className="border-t bg-white">
           <div className="mx-auto max-w-5xl px-4 py-6">
+            {/* Veteran Badge */}
+            <div className="mb-4 flex justify-center">
+              <div className="inline-flex items-center gap-2 rounded-full border-2 border-blue-600 bg-blue-50 px-4 py-2">
+                <span className="text-2xl">🇺🇸</span>
+                <span className="text-sm font-bold text-blue-900">
+                  Veteran Owned & Operated
+                </span>
+              </div>
+            </div>
+
             <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
               <div className="text-xs text-zinc-500">
                 ClaimCompass is not affiliated with the VA and does not provide legal or medical advice.
