@@ -11,13 +11,28 @@ type SymptomLog = {
   severity: number;
   affected_work: boolean;
   notes: string | null;
-  logged_at: string; // YYYY-MM-DD
+  logged_at: string;
   created_at: string;
+  mood_level: number | null;
+  mood_notes: string | null;
 };
 
 function todayISO() {
   return new Date().toISOString().slice(0, 10);
 }
+
+const MOOD_LABELS: Record<number, { emoji: string; label: string; color: string }> = {
+  1: { emoji: "😭", label: "Terrible", color: "text-red-600" },
+  2: { emoji: "😢", label: "Very Bad", color: "text-red-500" },
+  3: { emoji: "😟", label: "Bad", color: "text-orange-500" },
+  4: { emoji: "😕", label: "Poor", color: "text-orange-400" },
+  5: { emoji: "😐", label: "Neutral", color: "text-yellow-500" },
+  6: { emoji: "🙂", label: "Okay", color: "text-yellow-400" },
+  7: { emoji: "😊", label: "Good", color: "text-green-400" },
+  8: { emoji: "😄", label: "Very Good", color: "text-green-500" },
+  9: { emoji: "😁", label: "Great", color: "text-green-600" },
+  10: { emoji: "🤩", label: "Excellent", color: "text-green-700" },
+};
 
 export default function LogPage() {
   const router = useRouter();
@@ -31,17 +46,21 @@ export default function LogPage() {
   const [affectedWork, setAffectedWork] = useState(false);
   const [notes, setNotes] = useState("");
   const [loggedAt, setLoggedAt] = useState(todayISO());
+  const [moodLevel, setMoodLevel] = useState<number | null>(5);
+  const [moodNotes, setMoodNotes] = useState("");
 
   // List + editing
   const [logs, setLogs] = useState<SymptomLog[]>([]);
   const [editingId, setEditingId] = useState<string | null>(null);
 
-  // Edit form state (separate so create form doesn't get messy)
+  // Edit form state
   const [editCondition, setEditCondition] = useState("");
   const [editSeverity, setEditSeverity] = useState(5);
   const [editAffectedWork, setEditAffectedWork] = useState(false);
   const [editNotes, setEditNotes] = useState("");
   const [editLoggedAt, setEditLoggedAt] = useState(todayISO());
+  const [editMoodLevel, setEditMoodLevel] = useState<number | null>(5);
+  const [editMoodNotes, setEditMoodNotes] = useState("");
 
   const isEditing = useMemo(() => editingId !== null, [editingId]);
 
@@ -86,6 +105,8 @@ export default function LogPage() {
     setAffectedWork(false);
     setNotes("");
     setLoggedAt(todayISO());
+    setMoodLevel(5);
+    setMoodNotes("");
   };
 
   const addLog = async () => {
@@ -112,6 +133,8 @@ export default function LogPage() {
       affected_work: affectedWork,
       notes: notes.trim() ? notes.trim() : null,
       logged_at: loggedAt || todayISO(),
+      mood_level: moodLevel,
+      mood_notes: moodNotes.trim() ? moodNotes.trim() : null,
     });
 
     setLoading(false);
@@ -131,6 +154,8 @@ export default function LogPage() {
     setEditAffectedWork(!!l.affected_work);
     setEditNotes(l.notes ?? "");
     setEditLoggedAt(l.logged_at ?? todayISO());
+    setEditMoodLevel(l.mood_level);
+    setEditMoodNotes(l.mood_notes ?? "");
   };
 
   const cancelEdit = () => {
@@ -140,6 +165,8 @@ export default function LogPage() {
     setEditAffectedWork(false);
     setEditNotes("");
     setEditLoggedAt(todayISO());
+    setEditMoodLevel(5);
+    setEditMoodNotes("");
   };
 
   const saveEdit = async () => {
@@ -169,6 +196,8 @@ export default function LogPage() {
         affected_work: editAffectedWork,
         notes: editNotes.trim() ? editNotes.trim() : null,
         logged_at: editLoggedAt || todayISO(),
+        mood_level: editMoodLevel,
+        mood_notes: editMoodNotes.trim() ? editMoodNotes.trim() : null,
       })
       .eq("id", editingId);
 
@@ -201,11 +230,20 @@ export default function LogPage() {
 
     if (error) return setStatus("Delete error: " + error.message);
 
-    // If they deleted the one they were editing, exit edit mode
     if (editingId === l.id) cancelEdit();
 
     setStatus("✅ Deleted.");
     await loadLogs();
+  };
+
+  const getMoodDisplay = (level: number | null) => {
+    if (!level) return null;
+    const mood = MOOD_LABELS[level];
+    return (
+      <span className={`${mood.color} font-medium`}>
+        {mood.emoji} {mood.label}
+      </span>
+    );
   };
 
   return (
@@ -213,7 +251,7 @@ export default function LogPage() {
       <div>
         <h1 className="text-2xl font-semibold tracking-tight">Daily Symptom Log</h1>
         <p className="mt-2 text-sm text-zinc-600">
-          Track symptoms consistently so you can generate stronger statements and evidence later.
+          Track symptoms and mood consistently to generate stronger statements and evidence.
         </p>
       </div>
 
@@ -259,6 +297,21 @@ export default function LogPage() {
             />
           </label>
 
+          <label className="grid gap-1 md:col-span-2">
+            <span className="text-xs font-medium text-zinc-700">
+              Mood Level (1–10): {moodLevel ? getMoodDisplay(moodLevel) : "Not set"}
+            </span>
+            <input
+              type="range"
+              min={1}
+              max={10}
+              value={moodLevel ?? 5}
+              onChange={(e) => setMoodLevel(Number(e.target.value))}
+              className="w-full"
+            />
+            <div className="text-xs text-zinc-500">How did you feel today overall?</div>
+          </label>
+
           <label className="flex items-center gap-2 md:col-span-2">
             <input
               type="checkbox"
@@ -269,12 +322,22 @@ export default function LogPage() {
           </label>
 
           <label className="grid gap-1 md:col-span-2">
-            <span className="text-xs font-medium text-zinc-700">Notes (optional)</span>
+            <span className="text-xs font-medium text-zinc-700">Symptom notes (optional)</span>
             <textarea
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               placeholder="What happened? How did it impact your day?"
-              className="min-h-[110px] w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm outline-none focus:border-zinc-400"
+              className="min-h-[80px] w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm outline-none focus:border-zinc-400"
+            />
+          </label>
+
+          <label className="grid gap-1 md:col-span-2">
+            <span className="text-xs font-medium text-zinc-700">Mood notes (optional)</span>
+            <textarea
+              value={moodNotes}
+              onChange={(e) => setMoodNotes(e.target.value)}
+              placeholder="What affected your mood? Any triggers or positive moments?"
+              className="min-h-[60px] w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm outline-none focus:border-zinc-400"
             />
           </label>
         </div>
@@ -302,7 +365,7 @@ export default function LogPage() {
 
           {isEditing ? (
             <div className="text-xs text-zinc-500">
-              You’re currently editing an entry below.
+              You're currently editing an entry below.
             </div>
           ) : null}
         </div>
@@ -346,9 +409,19 @@ export default function LogPage() {
                             {l.logged_at} • Severity {l.severity}/10 • Affected work:{" "}
                             {l.affected_work ? "Yes" : "No"}
                           </div>
+                          {l.mood_level ? (
+                            <div className="mt-1 text-sm">
+                              Mood: {getMoodDisplay(l.mood_level)}
+                            </div>
+                          ) : null}
                           {l.notes ? (
                             <div className="mt-2 text-sm text-zinc-700 whitespace-pre-wrap">
-                              {l.notes}
+                              <span className="font-medium">Symptoms:</span> {l.notes}
+                            </div>
+                          ) : null}
+                          {l.mood_notes ? (
+                            <div className="mt-2 text-sm text-zinc-700 whitespace-pre-wrap">
+                              <span className="font-medium">Mood:</span> {l.mood_notes}
                             </div>
                           ) : null}
                         </div>
@@ -421,6 +494,20 @@ export default function LogPage() {
                           />
                         </label>
 
+                        <label className="grid gap-1 md:col-span-2">
+                          <span className="text-xs font-medium text-zinc-700">
+                            Mood Level (1–10): {editMoodLevel ? getMoodDisplay(editMoodLevel) : "Not set"}
+                          </span>
+                          <input
+                            type="range"
+                            min={1}
+                            max={10}
+                            value={editMoodLevel ?? 5}
+                            onChange={(e) => setEditMoodLevel(Number(e.target.value))}
+                            className="w-full"
+                          />
+                        </label>
+
                         <label className="flex items-center gap-2 md:col-span-2">
                           <input
                             type="checkbox"
@@ -431,11 +518,20 @@ export default function LogPage() {
                         </label>
 
                         <label className="grid gap-1 md:col-span-2">
-                          <span className="text-xs font-medium text-zinc-700">Notes (optional)</span>
+                          <span className="text-xs font-medium text-zinc-700">Symptom notes (optional)</span>
                           <textarea
                             value={editNotes}
                             onChange={(e) => setEditNotes(e.target.value)}
-                            className="min-h-[110px] w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm outline-none focus:border-zinc-400"
+                            className="min-h-[80px] w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm outline-none focus:border-zinc-400"
+                          />
+                        </label>
+
+                        <label className="grid gap-1 md:col-span-2">
+                          <span className="text-xs font-medium text-zinc-700">Mood notes (optional)</span>
+                          <textarea
+                            value={editMoodNotes}
+                            onChange={(e) => setEditMoodNotes(e.target.value)}
+                            className="min-h-[60px] w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm outline-none focus:border-zinc-400"
                           />
                         </label>
                       </div>
