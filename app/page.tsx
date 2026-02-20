@@ -30,9 +30,7 @@ export default function HomePage() {
 
   return (
     <div className="grid gap-12">
-      {/* Hero Section */}
       <section className="text-center">
-        {/* Veteran Badge */}
         <div className="mb-6 flex justify-center">
           <div className="inline-flex items-center gap-2 rounded-full border-2 border-blue-600 bg-blue-50 px-6 py-3">
             <span className="text-3xl">🇺🇸</span>
@@ -70,9 +68,8 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Features Grid */}
       <section className="grid gap-6 md:grid-cols-3">
-        <div className="rounded-2xl border bg-white p-6 shadow-sm" style={{borderTop: '3px solid #B22234'}}>
+        <div className="rounded-2xl border bg-white p-6 shadow-sm" style={{ borderTop: "3px solid #B22234" }}>
           <div className="text-3xl">📝</div>
           <h3 className="mt-3 text-lg font-semibold">Daily Symptom Tracking</h3>
           <p className="mt-2 text-sm text-zinc-600">
@@ -80,7 +77,7 @@ export default function HomePage() {
           </p>
         </div>
 
-        <div className="rounded-2xl border bg-white p-6 shadow-sm" style={{borderTop: '3px solid #3C3B6E'}}>
+        <div className="rounded-2xl border bg-white p-6 shadow-sm" style={{ borderTop: "3px solid #3C3B6E" }}>
           <div className="text-3xl">📄</div>
           <h3 className="mt-3 text-lg font-semibold">Statement Generation</h3>
           <p className="mt-2 text-sm text-zinc-600">
@@ -88,15 +85,15 @@ export default function HomePage() {
           </p>
         </div>
 
-        <div className="rounded-2xl border bg-white p-6 shadow-sm" style={{borderTop: '3px solid #B22234'}}>
+        <div className="rounded-2xl border bg-white p-6 shadow-sm" style={{ borderTop: "3px solid #B22234" }}>
           <div className="text-3xl">🗂️</div>
           <h3 className="mt-3 text-lg font-semibold">Evidence Vault</h3>
           <p className="mt-2 text-sm text-zinc-600">
-            Securely store medical records, doctor's notes, and supporting documents.
+            Securely store medical records, doctor notes, and supporting documents.
           </p>
         </div>
 
-        <div className="rounded-2xl border bg-white p-6 shadow-sm" style={{borderTop: '3px solid #3C3B6E'}}>
+        <div className="rounded-2xl border bg-white p-6 shadow-sm" style={{ borderTop: "3px solid #3C3B6E" }}>
           <div className="text-3xl">🎖️</div>
           <h3 className="mt-3 text-lg font-semibold">Achievement Badges</h3>
           <p className="mt-2 text-sm text-zinc-600">
@@ -104,7 +101,7 @@ export default function HomePage() {
           </p>
         </div>
 
-        <div className="rounded-2xl border bg-white p-6 shadow-sm" style={{borderTop: '3px solid #B22234'}}>
+        <div className="rounded-2xl border bg-white p-6 shadow-sm" style={{ borderTop: "3px solid #B22234" }}>
           <div className="text-3xl">🔔</div>
           <h3 className="mt-3 text-lg font-semibold">Smart Reminders</h3>
           <p className="mt-2 text-sm text-zinc-600">
@@ -112,7 +109,7 @@ export default function HomePage() {
           </p>
         </div>
 
-        <div className="rounded-2xl border bg-white p-6 shadow-sm" style={{borderTop: '3px solid #3C3B6E'}}>
+        <div className="rounded-2xl border bg-white p-6 shadow-sm" style={{ borderTop: "3px solid #3C3B6E" }}>
           <div className="text-3xl">🛡️</div>
           <h3 className="mt-3 text-lg font-semibold">Secure & Private</h3>
           <p className="mt-2 text-sm text-zinc-600">
@@ -121,7 +118,6 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Why Veterans Trust Us */}
       <section className="rounded-2xl border-2 border-blue-600 bg-blue-50 p-8">
         <div className="text-center">
           <div className="text-4xl">🇺🇸</div>
@@ -129,7 +125,7 @@ export default function HomePage() {
             Built by Veterans, For Veterans
           </h2>
           <p className="mx-auto mt-4 max-w-2xl text-blue-800">
-            We understand the VA claims process because we've been through it ourselves. 
+            We understand the VA claims process because we have been through it ourselves. 
             ClaimCompass was created to help fellow veterans organize their evidence and 
             increase their chances of approval.
           </p>
@@ -141,7 +137,6 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* CTA Section */}
       <section className="rounded-2xl bg-zinc-900 p-8 text-center text-white">
         <h2 className="text-2xl font-bold">Ready to Strengthen Your VA Claim?</h2>
         <p className="mt-3 text-zinc-300">
