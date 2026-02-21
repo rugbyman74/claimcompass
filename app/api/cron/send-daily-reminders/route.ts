@@ -11,17 +11,14 @@ const supabaseAdmin = createClient(
 
 export async function GET(req: Request) {
   try {
-    // Verify this is actually Vercel Cron (security check)
     const authHeader = req.headers.get("authorization");
     if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Get current hour in various timezones (simplified - you'd want better timezone handling)
     const now = new Date();
     const currentHour = now.getHours();
 
-    // Get all users with email reminders enabled
     const { data: profiles, error } = await supabaseAdmin
       .from("profiles")
       .select("user_id, full_name, reminder_time, reminder_days, email_reminders_enabled")
@@ -36,7 +33,6 @@ export async function GET(req: Request) {
       return NextResponse.json({ message: "No users with reminders enabled" });
     }
 
-    // Get user emails from auth
     const { data: { users }, error: usersError } = await supabaseAdmin.auth.admin.listUsers();
 
     if (usersError) {
@@ -47,18 +43,14 @@ export async function GET(req: Request) {
     let emailsSent = 0;
     const errors = [];
 
-    // Send emails to users whose reminder time matches current hour
     for (const profile of profiles) {
       const user = users.find(u => u.id === profile.user_id);
       if (!user || !user.email) continue;
 
-      // Parse reminder time (format: "18:00")
       const reminderHour = parseInt(profile.reminder_time?.split(":")[0] || "18");
 
-      // Check if current hour matches reminder hour (simplified timezone logic)
       if (reminderHour === currentHour) {
-        // Check day of week if needed
-        const dayOfWeek = now.getDay(); // 0 = Sunday, 6 = Saturday
+        const dayOfWeek = now.getDay();
         const shouldSend = 
           profile.reminder_days === "daily" ||
           (profile.reminder_days === "weekdays" && dayOfWeek >= 1 && dayOfWeek <= 5) ||
@@ -67,7 +59,7 @@ export async function GET(req: Request) {
         if (shouldSend) {
           try {
             await resend.emails.send({
-              from: "ClaimCompass <reminders@claimcompass.net>",
+              from: "ClaimCompass <onboarding@resend.dev>",
               to: user.email,
               subject: "Don't Forget to Log Your Symptoms Today",
               html: `
