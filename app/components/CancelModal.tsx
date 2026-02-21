@@ -10,24 +10,41 @@ type CancelModalProps = {
 
 export default function CancelModal({ isOpen, onClose, onConfirmCancel }: CancelModalProps) {
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState("");
 
   if (!isOpen) return null;
 
   const handleCancel = async () => {
     setIsLoading(true);
-    await onConfirmCancel();
-    setIsLoading(false);
+    setError("");
+
+    try {
+      const response = await fetch("/api/cancel-subscription", {
+        method: "POST",
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to cancel subscription");
+      }
+
+      // Success - call the parent's callback
+      onConfirmCancel();
+    } catch (err: any) {
+      setError(err.message);
+      setIsLoading(false);
+    }
   };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
       <div className="max-w-2xl w-full rounded-2xl bg-white p-6 shadow-xl">
-        {/* Header */}
         <div className="flex items-start justify-between gap-4">
           <div>
             <h2 className="text-2xl font-bold text-zinc-900">Before you go...</h2>
             <p className="mt-2 text-sm text-zinc-600">
-              Here's what you'll lose by canceling ClaimCompass Pro
+              Here is what you will lose by canceling ClaimCompass Pro
             </p>
           </div>
           <button
@@ -51,14 +68,12 @@ export default function CancelModal({ isOpen, onClose, onConfirmCancel }: Cancel
           </button>
         </div>
 
-        {/* Benefits Grid */}
         <div className="mt-6 grid gap-4 md:grid-cols-2">
-          {/* Benefit 1 */}
           <div className="rounded-xl border-2 border-blue-200 bg-blue-50 p-4">
             <div className="flex items-start gap-3">
               <div className="text-2xl">📄</div>
               <div>
-                <div className="font-semibold text-blue-900">PDF & Word Exports</div>
+                <div className="font-semibold text-blue-900">PDF and Word Exports</div>
                 <div className="mt-1 text-sm text-blue-800">
                   Generate professional statements for your VA claim in seconds
                 </div>
@@ -66,7 +81,6 @@ export default function CancelModal({ isOpen, onClose, onConfirmCancel }: Cancel
             </div>
           </div>
 
-          {/* Benefit 2 */}
           <div className="rounded-xl border-2 border-green-200 bg-green-50 p-4">
             <div className="flex items-start gap-3">
               <div className="text-2xl">🗂️</div>
@@ -79,7 +93,6 @@ export default function CancelModal({ isOpen, onClose, onConfirmCancel }: Cancel
             </div>
           </div>
 
-          {/* Benefit 3 */}
           <div className="rounded-xl border-2 border-purple-200 bg-purple-50 p-4">
             <div className="flex items-start gap-3">
               <div className="text-2xl">⚖️</div>
@@ -92,20 +105,18 @@ export default function CancelModal({ isOpen, onClose, onConfirmCancel }: Cancel
             </div>
           </div>
 
-          {/* Benefit 4 */}
           <div className="rounded-xl border-2 border-orange-200 bg-orange-50 p-4">
             <div className="flex items-start gap-3">
               <div className="text-2xl">🤝</div>
               <div>
                 <div className="font-semibold text-orange-900">Claims Support</div>
                 <div className="mt-1 text-sm text-orange-800">
-                  Help with appeals, increases, and new condition claims
+                  Help with appeals increases and new condition claims
                 </div>
               </div>
             </div>
           </div>
 
-          {/* Benefit 5 */}
           <div className="rounded-xl border-2 border-red-200 bg-red-50 p-4">
             <div className="flex items-start gap-3">
               <div className="text-2xl">🔔</div>
@@ -118,21 +129,19 @@ export default function CancelModal({ isOpen, onClose, onConfirmCancel }: Cancel
             </div>
           </div>
 
-          {/* Benefit 6 */}
           <div className="rounded-xl border-2 border-teal-200 bg-teal-50 p-4">
             <div className="flex items-start gap-3">
               <div className="text-2xl">📊</div>
               <div>
                 <div className="font-semibold text-teal-900">Post-Approval Tracking</div>
                 <div className="mt-1 text-sm text-teal-800">
-                  Monitor new conditions, re-evaluations, and benefit changes
+                  Monitor new conditions re-evaluations and benefit changes
                 </div>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Special Offer */}
         <div className="mt-6 rounded-xl border-2 border-emerald-300 bg-emerald-50 p-4">
           <div className="flex items-start gap-3">
             <div className="text-3xl">🎁</div>
@@ -140,13 +149,18 @@ export default function CancelModal({ isOpen, onClose, onConfirmCancel }: Cancel
               <div className="font-bold text-emerald-900">Special Offer: Stay for 50% Off</div>
               <div className="mt-1 text-sm text-emerald-800">
                 Keep your Pro subscription for just <strong>$6/month</strong> for the next 3 months.
-                That's half price!
+                That is half price!
               </div>
             </div>
           </div>
         </div>
 
-        {/* Action Buttons */}
+        {error && (
+          <div className="mt-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+            {error}
+          </div>
+        )}
+
         <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:justify-end">
           <button
             onClick={handleCancel}
@@ -157,13 +171,13 @@ export default function CancelModal({ isOpen, onClose, onConfirmCancel }: Cancel
           </button>
           <button
             onClick={onClose}
-            className="rounded-lg bg-emerald-600 px-6 py-3 text-sm font-semibold text-white hover:bg-emerald-700"
+            disabled={isLoading}
+            className="rounded-lg bg-emerald-600 px-6 py-3 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-50"
           >
             Keep My Pro Access
           </button>
         </div>
 
-        {/* Small print */}
         <div className="mt-4 text-center text-xs text-zinc-500">
           You can cancel anytime. No questions asked.
         </div>
