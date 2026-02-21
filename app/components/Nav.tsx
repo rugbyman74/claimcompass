@@ -82,6 +82,7 @@ export default function Nav() {
           <NavLink href="/vault">Vault</NavLink>
           <NavLink href="/badges">Badges</NavLink>
           <NavLink href="/refer">Refer</NavLink>
+          <NavLink href="/about">About</NavLink>
           <NavLink href="/account">Account</NavLink>
           {showDevLink ? <NavLink href="/dev">Dev</NavLink> : null}
         </nav>
@@ -113,6 +114,7 @@ export default function Nav() {
           <NavLink href="/vault">Vault</NavLink>
           <NavLink href="/badges">Badges</NavLink>
           <NavLink href="/refer">Refer</NavLink>
+          <NavLink href="/about">About</NavLink>
           <NavLink href="/account">Account</NavLink>
           {showDevLink ? <NavLink href="/dev">Dev</NavLink> : null}
         </div>
