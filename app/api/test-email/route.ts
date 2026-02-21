@@ -7,7 +7,7 @@ export async function GET() {
   try {
     const { data, error } = await resend.emails.send({
       from: "ClaimCompass <reminders@claimcompass.net>",
-      to: "YOUR_EMAIL_HERE", // Replace with your actual email
+      to: "rugbyman74@gmail.com", // Replace with your actual email
       subject: "Test Email from ClaimCompass",
       html: "<h1>Success!</h1><p>Your email system is working!</p>",
     });
