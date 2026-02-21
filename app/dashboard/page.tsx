@@ -1,431 +1,221 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { getProStatus } from "@/lib/pro";
-import { checkAndAwardBadges, getUserBadges } from "@/lib/badges";
 
 type SymptomLog = {
   id: string;
   condition: string;
   severity: number;
-  affected_work: boolean;
-  notes: string | null;
   logged_at: string;
-  created_at: string;
 };
 
-type UserBadge = {
+type Badge = {
   id: string;
-  badge_id: string;
-  badge_name: string;
-  badge_description: string;
-  badge_icon: string;
-  earned_at: string;
+  name: string;
+  description: string;
+  icon: string;
 };
-
-function todayISO() {
-  return new Date().toISOString().slice(0, 10);
-}
-
-function formatDateShort(iso: string) {
-  try {
-    const d = new Date(iso + "T00:00:00");
-    return d.toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
-  } catch {
-    return iso;
-  }
-}
 
 export default function DashboardPage() {
   const router = useRouter();
-
   const [loading, setLoading] = useState(true);
-  const [status, setStatus] = useState("");
-
-  const [fullName, setFullName] = useState<string | null>(null);
-  const [email, setEmail] = useState<string | null>(null);
-
-  const [isPro, setIsPro] = useState(false);
-  const [proLoaded, setProLoaded] = useState(false);
-
-  const [logCount, setLogCount] = useState(0);
-  const [vaultCount, setVaultCount] = useState<number | null>(null);
-  const [refCount, setRefCount] = useState<number | null>(null);
-
+  const [userName, setUserName] = useState("");
   const [recentLogs, setRecentLogs] = useState<SymptomLog[]>([]);
-  const [loggedToday, setLoggedToday] = useState<boolean>(false);
-
-  const [badges, setBadges] = useState<UserBadge[]>([]);
-  const [newBadges, setNewBadges] = useState<string[]>([]);
-
-  const planLabel = useMemo(() => (isPro ? "Pro" : "Free"), [isPro]);
-
-  const load = async () => {
-    setStatus("");
-
-    const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
-    const session = sessionData.session;
-
-    if (sessionError || !session) {
-      router.replace("/login");
-      return;
-    }
-
-    const userId = session.user.id;
-
-    const meta = (session.user.user_metadata ?? {}) as Record<string, any>;
-    const autoName =
-      (typeof meta.full_name === "string" && meta.full_name.trim()) ||
-      (typeof meta.name === "string" && meta.name.trim()) ||
-      null;
-
-    setFullName(autoName);
-    setEmail(session.user.email ?? null);
-
-    // Pro status
-    const pro = await getProStatus();
-    setIsPro(pro.isPro);
-    setProLoaded(true);
-
-    // Check and award badges
-    const badgeResult = await checkAndAwardBadges(userId);
-    if (badgeResult.newBadges.length > 0) {
-      setNewBadges(badgeResult.newBadges.map((b) => b.name));
-    }
-
-    // Get user's badges
-    const userBadges = await getUserBadges(userId);
-    setBadges(userBadges);
-
-    // Log count
-    const { count: logsTotal } = await supabase
-      .from("symptom_logs")
-      .select("*", { count: "exact", head: true });
-
-    setLogCount(logsTotal ?? 0);
-
-    // Recent logs
-    const { data: recent, error: recentErr } = await supabase
-      .from("symptom_logs")
-      .select("id, condition, severity, affected_work, notes, logged_at, created_at")
-      .order("logged_at", { ascending: false })
-      .order("created_at", { ascending: false })
-      .limit(5);
-
-    if (!recentErr) setRecentLogs((recent ?? []) as SymptomLog[]);
-
-    // Logged today?
-    const t = todayISO();
-    const { data: todayRow } = await supabase
-      .from("symptom_logs")
-      .select("id")
-      .eq("logged_at", t)
-      .limit(1)
-      .maybeSingle();
-
-    setLoggedToday(!!todayRow?.id);
-
-    // Evidence vault count
-    const { count: vaultTotal, error: vaultErr } = await supabase
-      .from("evidence_files")
-      .select("*", { count: "exact", head: true });
-
-    if (vaultErr) setVaultCount(null);
-    else setVaultCount(vaultTotal ?? 0);
-
-    // Referrals count
-    const { count: refTotal, error: refErr } = await supabase
-      .from("referrals")
-      .select("*", { count: "exact", head: true });
-
-    if (refErr) setRefCount(null);
-    else setRefCount(refTotal ?? 0);
-
-    setLoading(false);
-  };
+  const [badges, setBadges] = useState<Badge[]>([]);
+  const [isPro, setIsPro] = useState(false);
 
   useEffect(() => {
+    const load = async () => {
+      const { data: sessionData } = await supabase.auth.getSession();
+      if (!sessionData.session) {
+        router.replace("/login");
+        return;
+      }
+
+      const meta = sessionData.session.user.user_metadata ?? {};
+      const name = 
+        (typeof meta.full_name === "string" && meta.full_name.trim()) ||
+        (typeof meta.name === "string" && meta.name.trim()) ||
+        sessionData.session.user.email?.split("@")[0] ||
+        "there";
+      
+      setUserName(name);
+
+      const pro = await getProStatus();
+      setIsPro(pro.isPro);
+
+      const { data: logs } = await supabase
+        .from("symptom_logs")
+        .select("id, condition, severity, logged_at")
+        .order("logged_at", { ascending: false })
+        .limit(5);
+
+      setRecentLogs((logs ?? []) as SymptomLog[]);
+
+      const { data: badgeData } = await supabase
+        .from("user_badges")
+        .select("badge_id, badges(id, name, description, icon)")
+        .eq("user_id", sessionData.session.user.id)
+        .limit(3);
+
+      const earnedBadges = (badgeData ?? [])
+        .map((b: any) => b.badges)
+        .filter(Boolean) as Badge[];
+
+      setBadges(earnedBadges);
+      setLoading(false);
+    };
+
     load();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [router]);
 
   if (loading) {
     return (
-      <div className="mx-auto max-w-5xl">
-        <div className="rounded-2xl border bg-white p-8 shadow-sm" style={{borderTop: '3px solid #B22234'}}>
-          <div className="text-sm text-zinc-600">Loading dashboard…</div>
-        </div>
+      <div className="flex min-h-[60vh] items-center justify-center">
+        <div className="text-sm text-zinc-600">Loading dashboard...</div>
       </div>
     );
   }
 
   return (
-    <div className="mx-auto max-w-5xl grid gap-8">
-      {/* Header */}
+    <div className="grid gap-6">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-semibold tracking-tight">
-            Welcome{fullName ? `, ${fullName}` : ""}.
-          </h1>
-          <p className="mt-2 text-sm text-zinc-600">
-            {email ? `Signed in as ${email}` : "Your claim dashboard."}
+          <h1 className="text-2xl font-semibold tracking-tight">Welcome, {userName}!</h1>
+          <p className="mt-1 text-sm text-zinc-600">
+            Track your progress and manage your VA claim evidence.
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
-          {proLoaded ? (
-            isPro ? (
-              <span className="rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-sm font-semibold text-emerald-700">
-                Plan: {planLabel}
-              </span>
-            ) : (
-              <>
-                <span className="rounded-full border border-zinc-200 bg-white px-3 py-1 text-sm font-semibold text-zinc-900">
-                  Plan: {planLabel}
-                </span>
-                <Link
-                  href="/pricing"
-                  className="rounded-lg bg-zinc-900 px-4 py-2 text-sm font-semibold text-white hover:bg-zinc-800"
-                >
-                  Upgrade to Pro
-                </Link>
-              </>
-            )
+        <div className="text-sm">
+          {isPro ? (
+            <span className="rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-emerald-700">
+              Plan: Pro
+            </span>
           ) : (
-            <span className="text-sm text-zinc-500">Checking plan…</span>
+            <Link
+              href="/pricing"
+              className="rounded-full border border-zinc-200 bg-white px-3 py-1 font-semibold text-zinc-900 hover:bg-zinc-50"
+            >
+              Upgrade to Pro
+            </Link>
           )}
         </div>
       </div>
 
-      {/* New badges notification */}
-      {newBadges.length > 0 ? (
-        <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-5">
-          <div className="flex items-start gap-3">
-            <div className="text-2xl">🎖️</div>
-            <div>
-              <div className="text-sm font-semibold text-emerald-900">New Badge{newBadges.length > 1 ? 's' : ''} Earned!</div>
-              <div className="mt-1 text-sm text-emerald-900">
-                Congratulations! You earned: <strong>{newBadges.join(", ")}</strong>
-              </div>
-            </div>
-          </div>
-        </div>
-      ) : null}
-
-      {/* Badges section */}
-      {badges.length > 0 ? (
-        <section className="rounded-2xl border bg-white p-6 shadow-sm" style={{borderTop: '3px solid #3C3B6E'}}>
-          <div className="flex items-end justify-between gap-4">
-            <div>
-              <h2 className="text-lg font-semibold tracking-tight">Your Badges</h2>
-              <p className="mt-1 text-sm text-zinc-600">
-                {badges.length} badge{badges.length !== 1 ? 's' : ''} earned
-              </p>
-            </div>
-            <Link
-              href="/badges"
-              className="rounded-lg border border-zinc-200 bg-white px-4 py-2 text-sm font-semibold text-zinc-900 hover:bg-zinc-50"
-            >
-              View all
-            </Link>
-          </div>
-
-          <div className="mt-4 flex flex-wrap gap-3">
-            {badges.slice(0, 6).map((badge) => (
-              <div
-                key={badge.id}
-                className="flex items-center gap-2 rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-2"
-                title={badge.badge_description}
-              >
-                <span className="text-xl">{badge.badge_icon}</span>
-                <span className="text-sm font-medium text-zinc-900">{badge.badge_name}</span>
-              </div>
-            ))}
-          </div>
-        </section>
-      ) : null}
-
-      {/* Today card */}
-      <div className="rounded-2xl border bg-white p-6 shadow-sm" style={{borderTop: '3px solid #3C3B6E'}}>
-        <div className="flex flex-wrap items-start justify-between gap-4">
-          <div>
-            <div className="text-sm font-semibold text-zinc-900">Today</div>
-            <div className="mt-1 text-sm text-zinc-600">
-              {loggedToday ? "You've logged symptoms today." : "No entry logged for today yet."}
-            </div>
-          </div>
-
-          <div className="flex gap-2">
-            <Link
-              href="/log"
-              className="rounded-lg bg-zinc-900 px-4 py-2 text-sm font-semibold text-white hover:bg-zinc-800"
-            >
-              {loggedToday ? "View / Edit logs" : "Add today's log"}
-            </Link>
-
-            <button
-              onClick={load}
-              className="rounded-lg border border-zinc-200 bg-white px-4 py-2 text-sm font-semibold text-zinc-900 hover:bg-zinc-50"
-            >
-              Refresh
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {/* Optional Pro banner */}
-      {!isPro ? (
-        <div className="rounded-2xl border border-amber-200 bg-amber-50 p-5">
-          <div className="flex flex-wrap items-start justify-between gap-3">
-            <div>
-              <div className="text-sm font-semibold text-amber-900">Unlock ClaimCompass Pro</div>
-              <div className="mt-1 text-sm text-amber-900/90">
-                Pro includes PDF export for statements and uploads to the Evidence Vault.
-              </div>
-            </div>
-            <Link
-              href="/pricing"
-              className="inline-flex items-center rounded-lg bg-zinc-900 px-4 py-2 text-sm font-semibold text-white hover:bg-zinc-800"
-            >
-              View pricing
-            </Link>
-          </div>
-        </div>
-      ) : null}
-
-      {/* Stats */}
-      <div className="grid gap-6 md:grid-cols-3">
-        <div className="rounded-2xl border bg-white p-6 shadow-sm" style={{borderTop: '3px solid #B22234'}}>
-          <div className="text-sm text-zinc-500">Symptom logs</div>
-          <div className="mt-2 text-3xl font-semibold">{logCount}</div>
-          <div className="mt-2 text-xs text-zinc-500">Consistency builds stronger evidence.</div>
-        </div>
-
-        <div className="rounded-2xl border bg-white p-6 shadow-sm" style={{borderTop: '3px solid #FFFFFF', borderTopWidth: '3px', borderTopStyle: 'solid', borderTopColor: '#ddd'}}>
-          <div className="text-sm text-zinc-500">Evidence files</div>
-          <div className="mt-2 text-3xl font-semibold">
-            {vaultCount === null ? "—" : vaultCount}
-          </div>
-          <div className="mt-2 text-xs text-zinc-500">
-            {isPro ? "Uploads enabled." : "Uploads are Pro. Viewing remains free."}
-          </div>
-        </div>
-
-        <div className="rounded-2xl border bg-white p-6 shadow-sm" style={{borderTop: '3px solid #3C3B6E'}}>
-          <div className="text-sm text-zinc-500">Referrals</div>
-          <div className="mt-2 text-3xl font-semibold">{refCount === null ? "—" : refCount}</div>
-          <div className="mt-2 text-xs text-zinc-500">Rewards activate at launch.</div>
-        </div>
-      </div>
-
-      {/* Quick actions */}
-      <div className="grid gap-6 md:grid-cols-4">
+      <section className="grid gap-4 md:grid-cols-3">
         <Link
           href="/log"
-          className="rounded-2xl border bg-white p-6 shadow-sm hover:border-zinc-400 transition"
-          style={{borderLeft: '4px solid #B22234'}}
+          className="rounded-2xl border bg-white p-6 shadow-sm transition-all hover:shadow-md"
         >
-          <div className="text-lg font-semibold">Symptom Log</div>
-          <div className="mt-2 text-sm text-zinc-600">Add, edit, and delete entries.</div>
+          <div className="text-3xl">📝</div>
+          <h3 className="mt-3 text-lg font-semibold">Log Symptoms</h3>
+          <p className="mt-2 text-sm text-zinc-600">
+            Track your daily symptoms and mood.
+          </p>
         </Link>
 
         <Link
           href="/statement"
-          className="rounded-2xl border bg-white p-6 shadow-sm hover:border-zinc-400 transition"
-          style={{borderLeft: '4px solid #3C3B6E'}}
+          className="rounded-2xl border bg-white p-6 shadow-sm transition-all hover:shadow-md"
         >
-          <div className="flex items-center justify-between gap-2">
-            <div className="text-lg font-semibold">Statement</div>
-            {!isPro ? (
-              <span className="rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-xs font-semibold text-amber-900">
-                PDF = Pro
-              </span>
-            ) : null}
-          </div>
-          <div className="mt-2 text-sm text-zinc-600">Generate a statement from your logs.</div>
+          <div className="text-3xl">📄</div>
+          <h3 className="mt-3 text-lg font-semibold">Generate Statement</h3>
+          <p className="mt-2 text-sm text-zinc-600">
+            Create professional claim statements.
+          </p>
         </Link>
 
         <Link
           href="/vault"
-          className="rounded-2xl border bg-white p-6 shadow-sm hover:border-zinc-400 transition"
-          style={{borderLeft: '4px solid #B22234'}}
+          className="rounded-2xl border bg-white p-6 shadow-sm transition-all hover:shadow-md"
         >
-          <div className="flex items-center justify-between gap-2">
-            <div className="text-lg font-semibold">Evidence Vault</div>
-            {!isPro ? (
-              <span className="rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-xs font-semibold text-amber-900">
-                Upload = Pro
-              </span>
-            ) : null}
-          </div>
-          <div className="mt-2 text-sm text-zinc-600">Store PDFs/images securely.</div>
+          <div className="text-3xl">🗂️</div>
+          <h3 className="mt-3 text-lg font-semibold">Evidence Vault</h3>
+          <p className="mt-2 text-sm text-zinc-600">
+            Store medical records securely.
+          </p>
         </Link>
+      </section>
 
-        <Link
-          href="/refer"
-          className="rounded-2xl border bg-white p-6 shadow-sm hover:border-zinc-400 transition"
-          style={{borderLeft: '4px solid #3C3B6E'}}
-        >
-          <div className="text-lg font-semibold">Refer</div>
-          <div className="mt-2 text-sm text-zinc-600">Share your referral link.</div>
-        </Link>
-      </div>
-
-      {/* Recent activity */}
-      <section className="rounded-2xl border bg-white p-6 shadow-sm" style={{borderTop: '3px solid #B22234'}}>
-        <div className="flex flex-wrap items-end justify-between gap-4">
+      <section className="rounded-2xl border bg-white p-6 shadow-sm">
+        <div className="flex items-end justify-between gap-4">
           <div>
-            <h2 className="text-lg font-semibold tracking-tight">Recent activity</h2>
-            <p className="mt-1 text-sm text-zinc-600">Your last 5 symptom entries.</p>
+            <h2 className="text-lg font-semibold tracking-tight">Recent Symptom Logs</h2>
+            <p className="mt-1 text-sm text-zinc-600">
+              Your last 5 entries
+            </p>
           </div>
           <Link
             href="/log"
             className="rounded-lg border border-zinc-200 bg-white px-4 py-2 text-sm font-semibold text-zinc-900 hover:bg-zinc-50"
           >
-            View all
+            View All
           </Link>
         </div>
 
-        <div className="mt-4 grid gap-3">
-          {recentLogs.length === 0 ? (
-            <div className="rounded-xl border border-dashed p-6 text-sm text-zinc-600">
-              No recent logs yet. Add your first entry in <span className="font-semibold">Symptom Log</span>.
-            </div>
-          ) : (
-            recentLogs.map((l) => (
-              <div key={l.id} className="rounded-xl border border-zinc-200 p-4">
-                <div className="flex flex-wrap items-start justify-between gap-3">
-                  <div>
-                    <div className="font-semibold">{l.condition}</div>
-                    <div className="mt-1 text-sm text-zinc-600">
-                      {formatDateShort(l.logged_at)} • Severity {l.severity}/10 • Affected work:{" "}
-                      {l.affected_work ? "Yes" : "No"}
-                    </div>
-                    {l.notes ? (
-                      <div className="mt-2 text-sm text-zinc-700 whitespace-pre-wrap">{l.notes}</div>
-                    ) : null}
-                  </div>
-
-                  <Link
-                    href="/log"
-                    className="rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm font-semibold text-zinc-900 hover:bg-zinc-50"
-                  >
-                    Edit in Log
-                  </Link>
+        {recentLogs.length === 0 ? (
+          <div className="mt-4 rounded-xl border border-dashed p-6 text-sm text-zinc-600">
+            No symptom logs yet. Start tracking to build your evidence!
+          </div>
+        ) : (
+          <div className="mt-4 grid gap-3">
+            {recentLogs.map((log) => (
+              <div
+                key={log.id}
+                className="flex items-center justify-between rounded-lg border p-3"
+              >
+                <div>
+                  <div className="font-medium">{log.condition}</div>
+                  <div className="text-sm text-zinc-500">{log.logged_at}</div>
+                </div>
+                <div className="rounded-full bg-zinc-100 px-3 py-1 text-sm font-semibold">
+                  {log.severity}/10
                 </div>
               </div>
-            ))
-          )}
+            ))}
+          </div>
+        )}
+      </section>
+
+      <section className="rounded-2xl border bg-white p-6 shadow-sm">
+        <div className="flex items-end justify-between gap-4">
+          <div>
+            <h2 className="text-lg font-semibold tracking-tight">Recent Badges</h2>
+            <p className="mt-1 text-sm text-zinc-600">
+              Your latest achievements
+            </p>
+          </div>
+          <Link
+            href="/badges"
+            className="rounded-lg border border-zinc-200 bg-white px-4 py-2 text-sm font-semibold text-zinc-900 hover:bg-zinc-50"
+          >
+            View All
+          </Link>
         </div>
 
-        {status ? (
-          <div className="mt-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
-            {status}
+        {badges.length === 0 ? (
+          <div className="mt-4 rounded-xl border border-dashed p-6 text-sm text-zinc-600">
+            No badges earned yet. Keep logging to earn achievements!
           </div>
-        ) : null}
+        ) : (
+          <div className="mt-4 grid gap-3 md:grid-cols-3">
+            {badges.map((badge) => (
+              <div
+                key={badge.id}
+                className="rounded-xl border bg-gradient-to-br from-blue-50 to-purple-50 p-4"
+              >
+                <div className="text-3xl">{badge.icon}</div>
+                <div className="mt-2 font-semibold">{badge.name}</div>
+                <div className="mt-1 text-xs text-zinc-600">{badge.description}</div>
+              </div>
+            ))}
+          </div>
+        )}
       </section>
     </div>
   );
