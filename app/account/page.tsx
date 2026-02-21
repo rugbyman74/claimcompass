@@ -12,7 +12,6 @@ export default function AccountPage() {
   const [loading, setLoading] = useState(true);
   const [status, setStatus] = useState("");
 
-  // Account info
   const [fullName, setFullName] = useState<string>("");
   const [email, setEmail] = useState<string>("");
   const [phoneNumber, setPhoneNumber] = useState<string>("");
@@ -21,18 +20,15 @@ export default function AccountPage() {
   const [state, setState] = useState<string>("");
   const [zipCode, setZipCode] = useState<string>("");
 
-  // Edit mode
   const [isEditingAccount, setIsEditingAccount] = useState(false);
 
   const [isPro, setIsPro] = useState(false);
   const [proLoaded, setProLoaded] = useState(false);
 
-  // Email reminder settings
   const [emailRemindersEnabled, setEmailRemindersEnabled] = useState(false);
   const [reminderTime, setReminderTime] = useState("18:00");
   const [reminderDays, setReminderDays] = useState("daily");
 
-  // Cancel modal
   const [showCancelModal, setShowCancelModal] = useState(false);
 
   const load = async () => {
@@ -54,12 +50,10 @@ export default function AccountPage() {
 
     setEmail(session.user.email ?? "");
 
-    // Get Pro status
     const pro = await getProStatus();
     setIsPro(pro.isPro);
     setProLoaded(true);
 
-    // Get profile data
     const { data: profile } = await supabase
       .from("profiles")
       .select("*")
@@ -85,7 +79,6 @@ export default function AccountPage() {
 
   useEffect(() => {
     load();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [router]);
 
   const saveAccountInfo = async () => {
@@ -145,10 +138,24 @@ export default function AccountPage() {
   const handleCancelSubscription = async () => {
     setStatus("");
 
-    // TODO: Add Stripe cancellation API call here
-    // For now, just show a message
+    const res = await fetch("/api/cancel-subscription", {
+      method: "POST",
+    });
+
+    const data = await res.json();
+
     setShowCancelModal(false);
-    setStatus("❌ Subscription cancellation coming soon. Please contact support.");
+
+    if (!res.ok) {
+      setStatus("❌ " + (data.error || "Failed to cancel subscription"));
+      return;
+    }
+
+    setStatus("✅ Your subscription will cancel at the end of your billing period. You will keep Pro access until then.");
+    
+    setTimeout(() => {
+      window.location.reload();
+    }, 3000);
   };
 
   if (loading) {
@@ -166,11 +173,10 @@ export default function AccountPage() {
       <div>
         <h1 className="text-3xl font-semibold tracking-tight">Account Settings</h1>
         <p className="mt-2 text-sm text-zinc-600">
-          Manage your account, subscription, and preferences.
+          Manage your account subscription and preferences.
         </p>
       </div>
 
-      {/* Account Info */}
       <section className="rounded-2xl border bg-white p-6 shadow-sm">
         <div className="flex items-start justify-between gap-4">
           <h2 className="text-lg font-semibold tracking-tight">Account Information</h2>
@@ -317,7 +323,6 @@ export default function AccountPage() {
         )}
       </section>
 
-      {/* Subscription */}
       <section className="rounded-2xl border bg-white p-6 shadow-sm">
         <h2 className="text-lg font-semibold tracking-tight">Subscription</h2>
         
@@ -364,7 +369,6 @@ export default function AccountPage() {
         </div>
       </section>
 
-      {/* Email Reminders */}
       <section className="rounded-2xl border bg-white p-6 shadow-sm">
         <h2 className="text-lg font-semibold tracking-tight">Email Reminders</h2>
         <p className="mt-1 text-sm text-zinc-600">
@@ -428,7 +432,7 @@ export default function AccountPage() {
         {emailRemindersEnabled && (
           <div className="mt-4 rounded-lg border border-blue-200 bg-blue-50 p-3 text-sm text-blue-900">
             <strong>Note:</strong> Email reminders will be sent to {email}. Make sure to check your
-            spam folder if you don't see them in your inbox.
+            spam folder if you do not see them in your inbox.
           </div>
         )}
       </section>
@@ -445,7 +449,6 @@ export default function AccountPage() {
         </div>
       )}
 
-      {/* Cancel Modal */}
       <CancelModal
         isOpen={showCancelModal}
         onClose={() => setShowCancelModal(false)}
