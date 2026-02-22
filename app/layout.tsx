@@ -2,8 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import Nav from "./components/Nav";
-import Link from "next/link";
-import ReferralClaimer from "./components/ReferralClaimer";
+import { Analytics } from '@vercel/analytics/react';
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -16,15 +15,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "ClaimCompass",
-  description: "A secure VA claim organizer for symptom logs, statements, and evidence storage.",
+  title: "ClaimCompass - VA Claim Evidence Organizer",
+  description: "Track symptoms, store evidence, and generate statements for your VA disability claim. Built by veterans, for veterans.",
   manifest: "/manifest.json",
-  themeColor: "#3C3B6E",
-  appleWebApp: {
-    capable: true,
-    statusBarStyle: "default",
-    title: "ClaimCompass",
-  },
 };
 
 export default function RootLayout({
@@ -34,16 +27,22 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased bg-zinc-50 text-zinc-900`}>
+      <head>
+        <link rel="icon" href="/favicon.ico" sizes="any" />
+        <link rel="apple-touch-icon" href="/icon-192.png" />
+        <meta name="theme-color" content="#000000" />
+        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0" />
+      </head>
+      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         <Nav />
-        <ReferralClaimer />
-        <main className="mx-auto w-full max-w-5xl px-4 py-8">{children}</main>
+        <main className="mx-auto max-w-5xl px-4 py-8">
+          {children}
+        </main>
 
-        <footer className="border-t bg-white">
-          <div className="mx-auto max-w-5xl px-4 py-6">
-            {/* Veteran Badge */}
-            <div className="mb-4 flex justify-center">
-              <div className="inline-flex items-center gap-2 rounded-full border-2 border-blue-600 bg-blue-50 px-4 py-2">
+        <footer className="mt-16 border-t bg-zinc-50 py-8">
+          <div className="mx-auto max-w-5xl px-4">
+            <div className="mb-6 flex justify-center">
+              <div className="inline-flex items-center gap-2 rounded-full border-2 border-blue-600 bg-blue-50 px-6 py-3">
                 <span className="text-2xl">🇺🇸</span>
                 <span className="text-sm font-bold text-blue-900">
                   Veteran Owned & Operated
@@ -51,22 +50,20 @@ export default function RootLayout({
               </div>
             </div>
 
-            <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-              <div className="text-xs text-zinc-500">
-                ClaimCompass is not affiliated with the VA and does not provide legal or medical advice.
-              </div>
+            <div className="flex flex-wrap justify-center gap-6 text-sm text-zinc-600">
+              <a href="/about" className="hover:text-zinc-900">About</a>
+              <a href="/pricing" className="hover:text-zinc-900">Pricing</a>
+              <a href="/privacy" className="hover:text-zinc-900">Privacy</a>
+              <a href="/terms" className="hover:text-zinc-900">Terms</a>
+              <a href="/feedback" className="hover:text-zinc-900">Feedback</a>
+            </div>
 
-              <div className="flex flex-wrap gap-3 text-xs">
-                <Link className="text-zinc-600 hover:text-zinc-900" href="/faq">FAQ</Link>
-                <Link className="text-zinc-600 hover:text-zinc-900" href="/contact">Contact</Link>
-                <Link className="text-zinc-600 hover:text-zinc-900" href="/data-deletion">Data Deletion</Link>
-                <Link className="text-zinc-600 hover:text-zinc-900" href="/privacy">Privacy</Link>
-                <Link className="text-zinc-600 hover:text-zinc-900" href="/terms">Terms</Link>
-                <Link className="text-zinc-600 hover:text-zinc-900" href="/security">Security</Link>
-              </div>
+            <div className="mt-6 text-center text-xs text-zinc-500">
+              © 2026 ClaimCompass. All rights reserved.
             </div>
           </div>
         </footer>
+        <Analytics />
       </body>
     </html>
   );
