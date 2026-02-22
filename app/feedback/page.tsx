@@ -29,15 +29,31 @@ export default function FeedbackPage() {
       message: message.trim(),
     });
 
-    setLoading(false);
-
     if (error) {
+      setLoading(false);
       setStatus("❌ Failed to submit feedback: " + error.message);
-    } else {
-      setStatus("✅ Thank you for your feedback! We read every submission.");
-      setMessage("");
-      setFeedbackType("general");
+      return;
     }
+
+    // Send email notification
+    try {
+      await fetch("/api/send-feedback-notification", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          feedbackType,
+          message: message.trim(),
+          userEmail,
+        }),
+      });
+    } catch (emailError) {
+      console.error("Email notification failed:", emailError);
+    }
+
+    setLoading(false);
+    setStatus("✅ Thank you for your feedback! We read every submission.");
+    setMessage("");
+    setFeedbackType("general");
   };
 
   return (
