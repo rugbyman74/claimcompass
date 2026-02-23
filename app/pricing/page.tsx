@@ -1,137 +1,238 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { useRouter } from "next/navigation";
+import { getProStatus } from "@/lib/pro";
 
 export default function PricingPage() {
   const router = useRouter();
-  const [loading, setLoading] = useState(false);
-  const [status, setStatus] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [isPro, setIsPro] = useState(false);
+  const [billingCycle, setBillingCycle] = useState<"monthly" | "annual">("annual");
 
-  const handleUpgrade = async () => {
-    setStatus("");
-    setLoading(true);
-
-    try {
-      const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
-      
-      if (sessionError || !sessionData.session) {
-        setStatus("❌ Please log in first");
+  useEffect(() => {
+    const load = async () => {
+      const { data } = await supabase.auth.getSession();
+      if (!data.session) {
         setLoading(false);
-        router.push("/login");
         return;
       }
 
-      const userId = sessionData.session.user.id;
-      const email = sessionData.session.user.email;
-
-      const response = await fetch("/api/create-checkout", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId, email }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || "Failed to create checkout session");
-      }
-
-      if (data.url) {
-        window.location.href = data.url;
-      }
-    } catch (error: any) {
-      setStatus(`❌ ${error.message}`);
+      const pro = await getProStatus();
+      setIsPro(pro.isPro);
       setLoading(false);
+    };
+
+    load();
+  }, []);
+
+  const handleUpgrade = async () => {
+    const { data: sessionData } = await supabase.auth.getSession();
+    if (!sessionData.session) {
+      router.push("/login");
+      return;
     }
+
+    const priceId = billingCycle === "monthly" 
+      ? process.env.NEXT_PUBLIC_STRIPE_PRICE_ID 
+      : process.env.NEXT_PUBLIC_STRIPE_ANNUAL_PRICE_ID;
+
+    const res = await fetch("/api/create-checkout", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ priceId }),
+    });
+
+    const { url } = await res.json();
+    if (url) window.location.href = url;
   };
 
+  const monthlyPrice = 12;
+  const annualPrice = 100;
+  const monthlySavings = (monthlyPrice * 12 - annualPrice).toFixed(0);
+
   return (
-    <div className="mx-auto max-w-4xl grid gap-8">
-      <div>
-        <h1 className="text-3xl font-semibold tracking-tight">ClaimCompass Pro</h1>
-        <p className="mt-2 text-sm text-zinc-600">
-          Upgrade to unlock premium features.
+    <div className="mx-auto max-w-5xl">
+      <div className="text-center">
+        <h1 className="text-4xl font-bold tracking-tight">Choose Your Plan</h1>
+        <p className="mt-4 text-lg text-zinc-600">
+          Start free, upgrade when you need advanced features
         </p>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2">
-        <div className="rounded-2xl border bg-white p-6 shadow-sm">
-          <div className="text-sm font-semibold text-zinc-900">Free</div>
-          <div className="mt-2 text-3xl font-semibold">$0</div>
-          <ul className="mt-4 space-y-2 text-sm text-zinc-700">
-            <li>✅ Symptom logging</li>
-            <li>✅ Edit & delete entries</li>
-            <li>✅ Statement builder preview</li>
-            <li>✅ Referral link</li>
-            <li>✅ Badge system</li>
+      <div className="mt-8 flex justify-center">
+        <div className="inline-flex rounded-lg border-2 border-zinc-200 bg-zinc-100 p-1">
+          <button
+            onClick={() => setBillingCycle("monthly")}
+            className={`rounded-md px-6 py-2 text-sm font-semibold transition-all ${
+              billingCycle === "monthly"
+                ? "bg-white text-zinc-900 shadow"
+                : "text-zinc-600 hover:text-zinc-900"
+            }`}
+          >
+            Monthly
+          </button>
+          <button
+            onClick={() => setBillingCycle("annual")}
+            className={`rounded-md px-6 py-2 text-sm font-semibold transition-all ${
+              billingCycle === "annual"
+                ? "bg-white text-zinc-900 shadow"
+                : "text-zinc-600 hover:text-zinc-900"
+            }`}
+          >
+            Annual
+            <span className="ml-2 rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-bold text-emerald-700">
+              Save ${monthlySavings}
+            </span>
+          </button>
+        </div>
+      </div>
+
+      <div className="mt-12 grid gap-8 md:grid-cols-2">
+        <div className="rounded-2xl border-2 bg-white p-8 shadow-sm">
+          <h2 className="text-2xl font-bold">Free</h2>
+          <div className="mt-4">
+            <div className="text-4xl font-bold">$0</div>
+            <div className="text-sm text-zinc-600">Forever</div>
+          </div>
+
+          <ul className="mt-8 space-y-4">
+            <li className="flex items-start gap-3">
+              <div className="text-emerald-600">✓</div>
+              <div className="text-sm">Daily symptom & mood tracking</div>
+            </li>
+            <li className="flex items-start gap-3">
+              <div className="text-emerald-600">✓</div>
+              <div className="text-sm">Basic document storage</div>
+            </li>
+            <li className="flex items-start gap-3">
+              <div className="text-emerald-600">✓</div>
+              <div className="text-sm">Achievement badges</div>
+            </li>
+            <li className="flex items-start gap-3">
+              <div className="text-emerald-600">✓</div>
+              <div className="text-sm">Email reminders</div>
+            </li>
+            <li className="flex items-start gap-3">
+              <div className="text-emerald-600">✓</div>
+              <div className="text-sm">Referral system</div>
+            </li>
           </ul>
+
+          <button
+            onClick={() => router.push("/login")}
+            className="mt-8 w-full rounded-lg border-2 border-zinc-200 bg-white px-6 py-3 text-base font-semibold text-zinc-900 hover:bg-zinc-50"
+          >
+            Get Started Free
+          </button>
         </div>
 
-        <div className="rounded-2xl border-2 border-blue-500 bg-white p-6 shadow-lg relative">
-          <div className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-blue-500 px-3 py-1 text-xs font-semibold text-white">
-            RECOMMENDED
+        <div className="relative rounded-2xl border-2 border-emerald-500 bg-white p-8 shadow-lg">
+          <div className="absolute -top-4 left-1/2 -translate-x-1/2 rounded-full bg-emerald-500 px-4 py-1 text-sm font-bold text-white">
+            Most Popular
           </div>
-          <div className="text-sm font-semibold text-zinc-900">Pro</div>
-          <div className="mt-2 text-3xl font-semibold">
-            $12<span className="text-base font-semibold text-zinc-500">/mo</span>
+
+          <h2 className="text-2xl font-bold">Pro</h2>
+          <div className="mt-4">
+            {billingCycle === "monthly" ? (
+              <>
+                <div className="text-4xl font-bold">${monthlyPrice}</div>
+                <div className="text-sm text-zinc-600">per month</div>
+              </>
+            ) : (
+              <>
+                <div className="flex items-baseline gap-2">
+                  <div className="text-4xl font-bold">${annualPrice}</div>
+                  <div className="text-lg text-zinc-500 line-through">${monthlyPrice * 12}</div>
+                </div>
+                <div className="text-sm text-zinc-600">
+                  per year (${(annualPrice / 12).toFixed(2)}/month)
+                </div>
+                <div className="mt-1 text-sm font-semibold text-emerald-600">
+                  Save ${monthlySavings} annually!
+                </div>
+              </>
+            )}
           </div>
-          <ul className="mt-4 space-y-2 text-sm text-zinc-700">
-            <li>⭐ PDF export for statements</li>
-            <li>⭐ Evidence Vault uploads & storage</li>
-            <li>⭐ All Free features</li>
-            <li>⭐ Priority support</li>
-            <li>⭐ Future: claim package builder</li>
+
+          <div className="mt-6 rounded-lg bg-emerald-50 p-4 text-sm text-emerald-900">
+            <strong>Everything in Free, plus:</strong>
+          </div>
+
+          <ul className="mt-6 space-y-4">
+            <li className="flex items-start gap-3">
+              <div className="text-emerald-600">✓</div>
+              <div className="text-sm">
+                <strong>PDF & Word Exports</strong> - Generate professional statements
+              </div>
+            </li>
+            <li className="flex items-start gap-3">
+              <div className="text-emerald-600">✓</div>
+              <div className="text-sm">
+                <strong>Unlimited Storage</strong> - Store all your medical records
+              </div>
+            </li>
+            <li className="flex items-start gap-3">
+              <div className="text-emerald-600">✓</div>
+              <div className="text-sm">
+                <strong>SMS Reminders</strong> - Text message notifications
+              </div>
+            </li>
+            <li className="flex items-start gap-3">
+              <div className="text-emerald-600">✓</div>
+              <div className="text-sm">
+                <strong>Priority Support</strong> - Get help when you need it
+              </div>
+            </li>
+            <li className="flex items-start gap-3">
+              <div className="text-emerald-600">✓</div>
+              <div className="text-sm">
+                <strong>Post-Approval Tracking</strong> - Monitor new conditions
+              </div>
+            </li>
           </ul>
 
-          <div className="mt-6">
+          {loading ? (
+            <button
+              disabled
+              className="mt-8 w-full rounded-lg bg-zinc-400 px-6 py-3 text-base font-semibold text-white"
+            >
+              Loading...
+            </button>
+          ) : isPro ? (
+            <button
+              disabled
+              className="mt-8 w-full rounded-lg bg-emerald-100 px-6 py-3 text-base font-semibold text-emerald-700"
+            >
+              Current Plan
+            </button>
+          ) : (
             <button
               onClick={handleUpgrade}
-              disabled={loading}
-              className="w-full rounded-lg bg-blue-600 px-4 py-3 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-50"
+              className="mt-8 w-full rounded-lg bg-emerald-600 px-6 py-3 text-base font-semibold text-white hover:bg-emerald-700"
             >
-              {loading ? "Loading..." : "Upgrade to Pro"}
+              Upgrade to Pro
             </button>
+          )}
 
-            {status ? (
-              <div
-                className={`mt-3 rounded-lg border px-3 py-2 text-sm ${
-                  status.startsWith("❌")
-                    ? "border-red-200 bg-red-50 text-red-700"
-                    : "border-emerald-200 bg-emerald-50 text-emerald-700"
-                }`}
-              >
-                {status}
-              </div>
-            ) : null}
-          </div>
-
-          <div className="mt-4 text-xs text-zinc-500 text-center">
-            Secure payment powered by Stripe
+          <div className="mt-4 text-center text-xs text-zinc-500">
+            Cancel anytime. No questions asked.
           </div>
         </div>
       </div>
 
-      <div className="rounded-2xl border border-zinc-200 bg-zinc-50 p-6">
-        <h2 className="text-lg font-semibold">Frequently Asked Questions</h2>
-        <div className="mt-4 space-y-4 text-sm">
-          <div>
-            <div className="font-semibold text-zinc-900">Can I cancel anytime?</div>
-            <div className="mt-1 text-zinc-600">Yes, cancel anytime. No questions asked.</div>
-          </div>
-          <div>
-            <div className="font-semibold text-zinc-900">Is my payment secure?</div>
-            <div className="mt-1 text-zinc-600">
-              Yes, all payments are processed securely through Stripe. We never see your card details.
-            </div>
-          </div>
-          <div>
-            <div className="font-semibold text-zinc-900">What happens to my data if I cancel?</div>
-            <div className="mt-1 text-zinc-600">
-              Your data stays safe. You can still view everything, but uploads and PDF exports require Pro.
-            </div>
-          </div>
+      <div className="mt-16 rounded-2xl border-2 border-blue-600 bg-blue-50 p-8">
+        <div className="text-center">
+          <div className="text-4xl">🇺🇸</div>
+          <h2 className="mt-4 text-2xl font-bold text-blue-900">
+            Built by a Veteran, For Veterans
+          </h2>
+          <p className="mx-auto mt-4 max-w-2xl text-blue-800">
+            As a 12-year Army veteran with 100% P&T, I built ClaimCompass to help fellow veterans 
+            organize their evidence and strengthen their VA claims. No affiliate marketing, no data 
+            selling - just a tool to help you get the benefits you have earned.
+          </p>
         </div>
       </div>
     </div>
