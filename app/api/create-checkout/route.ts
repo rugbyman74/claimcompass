@@ -7,17 +7,21 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
 
 export async function POST(req: Request) {
   try {
-    const { email, userId } = await req.json();
+    const { email, userId, priceId } = await req.json();
 
     if (!email || !userId) {
       return NextResponse.json({ error: "Email and User ID required" }, { status: 400 });
+    }
+
+    if (!priceId) {
+      return NextResponse.json({ error: "Price ID required" }, { status: 400 });
     }
 
     const session = await stripe.checkout.sessions.create({
       customer_email: email,
       line_items: [
         {
-          price: process.env.STRIPE_PRICE_ID!,
+          price: priceId,
           quantity: 1,
         },
       ],
