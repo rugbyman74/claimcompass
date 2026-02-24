@@ -28,6 +28,7 @@ export default function AccountPage() {
   const [emailRemindersEnabled, setEmailRemindersEnabled] = useState(false);
   const [reminderTime, setReminderTime] = useState("18:00");
   const [reminderDays, setReminderDays] = useState("daily");
+  const [timezone, setTimezone] = useState("America/Chicago");
 
   const [showCancelModal, setShowCancelModal] = useState(false);
 
@@ -70,6 +71,7 @@ export default function AccountPage() {
       setEmailRemindersEnabled(profile.email_reminders_enabled ?? false);
       setReminderTime(profile.reminder_time ?? "18:00");
       setReminderDays(profile.reminder_days ?? "daily");
+      setTimezone(profile.timezone ?? "America/Chicago");
     } else {
       setFullName(autoName);
     }
@@ -125,6 +127,7 @@ export default function AccountPage() {
         email_reminders_enabled: emailRemindersEnabled,
         reminder_time: reminderTime,
         reminder_days: reminderDays,
+        timezone: timezone,
       })
       .eq("user_id", sessionData.session.user.id);
 
@@ -167,6 +170,16 @@ export default function AccountPage() {
       </div>
     );
   }
+
+  const timezones = [
+    { value: "America/New_York", label: "Eastern Time (ET)" },
+    { value: "America/Chicago", label: "Central Time (CT)" },
+    { value: "America/Denver", label: "Mountain Time (MT)" },
+    { value: "America/Phoenix", label: "Arizona (no DST)" },
+    { value: "America/Los_Angeles", label: "Pacific Time (PT)" },
+    { value: "America/Anchorage", label: "Alaska Time (AKT)" },
+    { value: "Pacific/Honolulu", label: "Hawaii Time (HT)" },
+  ];
 
   return (
     <div className="mx-auto max-w-3xl grid gap-8">
@@ -334,7 +347,7 @@ export default function AccountPage() {
                   <div>
                     <div className="font-semibold text-emerald-900">ClaimCompass Pro</div>
                     <div className="mt-1 text-sm text-emerald-800">
-                      $12/month • Active
+                      Active subscription
                     </div>
                   </div>
                   <button
@@ -390,6 +403,26 @@ export default function AccountPage() {
 
           {emailRemindersEnabled && (
             <>
+              <div className="grid gap-1">
+                <label className="text-xs font-medium text-zinc-700">
+                  Your Time Zone
+                </label>
+                <select
+                  value={timezone}
+                  onChange={(e) => setTimezone(e.target.value)}
+                  className="w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm outline-none focus:border-zinc-400"
+                >
+                  {timezones.map((tz) => (
+                    <option key={tz.value} value={tz.value}>
+                      {tz.label}
+                    </option>
+                  ))}
+                </select>
+                <div className="text-xs text-zinc-500">
+                  Select your local time zone for accurate reminders
+                </div>
+              </div>
+
               <div className="grid gap-1">
                 <label className="text-xs font-medium text-zinc-700">
                   Reminder time (your local time)
