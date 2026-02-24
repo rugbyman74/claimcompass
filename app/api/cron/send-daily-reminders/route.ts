@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { Resend } from "resend";
+import { zonedTimeToUtc, utcToZonedTime, format } from "date-fns-tz";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
@@ -13,16 +14,15 @@ export async function GET(req: Request) {
   try {
     const authHeader = req.headers.get("authorization");
     if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const now = new Date();
-    const currentHour = now.getHours();
-    console.log("Current hour on server:", currentHour);
+    const currentHourUTC = now.getUTCHours();
 
     const { data: profiles, error } = await supabaseAdmin
       .from("profiles")
-      .select("user_id, full_name, reminder_time, reminder_days, email_reminders_enabled")
+      .select("user_id, full_name, reminder_time, reminder_days, timezone, email_reminders_enabled")
       .eq("email_reminders_enabled", true);
 
     if (error) {
@@ -33,8 +33,6 @@ export async function GET(req: Request) {
     if (!profiles || profiles.length === 0) {
       return NextResponse.json({ message: "No users with reminders enabled" });
     }
-
-    console.log("Found profiles:", profiles);
 
     const { data: { users }, error: usersError } = await supabaseAdmin.auth.admin.listUsers();
 
@@ -50,17 +48,21 @@ export async function GET(req: Request) {
       const user = users.find(u => u.id === profile.user_id);
       if (!user || !user.email) continue;
 
-      const reminderHour = parseInt(profile.reminder_time?.split(":")[0] || "18");
-      console.log("User:", user.email, "Reminder hour:", reminderHour, "Current hour:", currentHour);
+      // Get user's local time
+      const userTimezone = profile.timezone || "America/Chicago";
+      const userLocalTime = utcToZonedTime(now, userTimezone);
+      const userLocalHour = userLocalTime.getHours();
 
-      if (reminderHour === currentHour) {
-        const dayOfWeek = now.getDay();
+      // Get the hour from their reminder time setting
+      const reminderHour = parseInt(profile.reminder_time?.split(":")[0] || "18");
+
+      // Check if current local hour matches their reminder hour
+      if (userLocalHour === reminderHour) {
+        const dayOfWeek = userLocalTime.getDay();
         const shouldSend = 
           profile.reminder_days === "daily" ||
           (profile.reminder_days === "weekdays" && dayOfWeek >= 1 && dayOfWeek <= 5) ||
           (profile.reminder_days === "weekends" && (dayOfWeek === 0 || dayOfWeek === 6));
-
-        console.log("Should send?", shouldSend, "Day of week:", dayOfWeek, "Reminder days:", profile.reminder_days);
 
         if (shouldSend) {
           try {
@@ -105,7 +107,6 @@ export async function GET(req: Request) {
               `,
             });
             emailsSent++;
-            console.log("Email sent to:", user.email);
           } catch (emailError: any) {
             console.error(`Failed to send to ${user.email}:`, emailError);
             errors.push({ email: user.email, error: emailError.message });
