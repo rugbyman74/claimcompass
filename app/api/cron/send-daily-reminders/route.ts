@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { Resend } from "resend";
-import { zonedTimeToUtc, utcToZonedTime, format } from "date-fns-tz";
+import { toZonedTime } from "date-fns-tz";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
@@ -48,15 +48,12 @@ export async function GET(req: Request) {
       const user = users.find(u => u.id === profile.user_id);
       if (!user || !user.email) continue;
 
-      // Get user's local time
       const userTimezone = profile.timezone || "America/Chicago";
-      const userLocalTime = utcToZonedTime(now, userTimezone);
+      const userLocalTime = toZonedTime(now, userTimezone);
       const userLocalHour = userLocalTime.getHours();
 
-      // Get the hour from their reminder time setting
       const reminderHour = parseInt(profile.reminder_time?.split(":")[0] || "18");
 
-      // Check if current local hour matches their reminder hour
       if (userLocalHour === reminderHour) {
         const dayOfWeek = userLocalTime.getDay();
         const shouldSend = 
