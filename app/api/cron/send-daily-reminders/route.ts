@@ -11,13 +11,14 @@ const supabaseAdmin = createClient(
 
 export async function GET(req: Request) {
   try {
-    //const authHeader = req.headers.get("authorization");
-    //if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
-    //  return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    //}
+    // const authHeader = req.headers.get("authorization");
+    // if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+    //   return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    // }
 
     const now = new Date();
     const currentHour = now.getHours();
+    console.log("Current hour on server:", currentHour);
 
     const { data: profiles, error } = await supabaseAdmin
       .from("profiles")
@@ -32,6 +33,8 @@ export async function GET(req: Request) {
     if (!profiles || profiles.length === 0) {
       return NextResponse.json({ message: "No users with reminders enabled" });
     }
+
+    console.log("Found profiles:", profiles);
 
     const { data: { users }, error: usersError } = await supabaseAdmin.auth.admin.listUsers();
 
@@ -48,6 +51,7 @@ export async function GET(req: Request) {
       if (!user || !user.email) continue;
 
       const reminderHour = parseInt(profile.reminder_time?.split(":")[0] || "18");
+      console.log("User:", user.email, "Reminder hour:", reminderHour, "Current hour:", currentHour);
 
       if (reminderHour === currentHour) {
         const dayOfWeek = now.getDay();
@@ -55,6 +59,8 @@ export async function GET(req: Request) {
           profile.reminder_days === "daily" ||
           (profile.reminder_days === "weekdays" && dayOfWeek >= 1 && dayOfWeek <= 5) ||
           (profile.reminder_days === "weekends" && (dayOfWeek === 0 || dayOfWeek === 6));
+
+        console.log("Should send?", shouldSend, "Day of week:", dayOfWeek, "Reminder days:", profile.reminder_days);
 
         if (shouldSend) {
           try {
@@ -99,6 +105,7 @@ export async function GET(req: Request) {
               `,
             });
             emailsSent++;
+            console.log("Email sent to:", user.email);
           } catch (emailError: any) {
             console.error(`Failed to send to ${user.email}:`, emailError);
             errors.push({ email: user.email, error: emailError.message });
