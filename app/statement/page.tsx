@@ -45,12 +45,14 @@ export default function StatementPage() {
       return;
     }
 
-    const meta = (session.user.user_metadata ?? {}) as Record<string, any>;
-    const autoName =
-      (typeof meta.full_name === "string" && meta.full_name.trim()) ||
-      (typeof meta.name === "string" && meta.name.trim()) ||
-      session.user.email ||
-      "";
+    // Fetch profile data
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("full_name")
+      .eq("user_id", session.user.id)
+      .single();
+
+    const autoName = profile?.full_name || session.user.email || "";
 
     setFullName(autoName);
 
