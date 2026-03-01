@@ -12,11 +12,11 @@ const supabaseAdmin = createClient(
 
 export async function GET(req: Request) {
   try {
-    // TEMPORARILY DISABLED FOR DEBUGGING
-    // const authHeader = req.headers.get("authorization");
-    // if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
-    //   return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    // }
+    // Re-enabled auth for Vercel automatic cron execution
+    const authHeader = req.headers.get("authorization");
+    if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
 
     const now = new Date();
     const currentHourUTC = now.getUTCHours();
@@ -35,8 +35,6 @@ export async function GET(req: Request) {
     let emailsSent = 0;
     const errors = [];
 
-    const debugInfo = []; // Store debug info for each user
-
     for (const profile of profiles) {
       const user = users.data.users.find(u => u.id === profile.user_id);
       if (!user || !user.email) continue;
@@ -46,20 +44,6 @@ export async function GET(req: Request) {
       const userLocalHour = userLocalTime.getHours();
 
       const reminderHour = parseInt(profile.reminder_time?.split(":")[0] || "18");
-
-      // Debug info for this user
-      const debug = {
-        email: user.email,
-        timezone: userTimezone,
-        reminderTime: profile.reminder_time,
-        reminderHour: reminderHour,
-        currentUTC: now.toISOString(),
-        currentHourUTC: currentHourUTC,
-        userLocalTime: userLocalTime.toISOString(),
-        userLocalHour: userLocalHour,
-        shouldSend: userLocalHour === reminderHour,
-      };
-      debugInfo.push(debug);
 
       if (userLocalHour === reminderHour) {
         const dayofWeek = userLocalTime.getDay();
@@ -108,9 +92,6 @@ export async function GET(req: Request) {
       success: true,
       emailsSent,
       totalUsersChecked: profiles.length,
-      currentTimeUTC: now.toISOString(),
-      currentHourUTC,
-      debugInfo, // Include debug info in response
       errors: errors.length > 0 ? errors : undefined,
     });
   } catch (err: any) {
