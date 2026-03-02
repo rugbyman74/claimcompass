@@ -12,14 +12,14 @@ const supabaseAdmin = createClient(
 
 export async function GET(req: Request) {
   try {
-    // Re-enabled auth for Vercel automatic cron execution
     const authHeader = req.headers.get("authorization");
-    if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+    const isVercelCron = req.headers.get("x-vercel-cron") === "1";
+
+    if (!isVercelCron && authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const now = new Date();
-    const currentHourUTC = now.getUTCHours();
 
     const { data: profiles, error } = await supabaseAdmin
       .from("profiles")
