@@ -113,7 +113,6 @@ export default function VaultPage() {
       return;
     }
 
-    // Check by extension as fallback for mobile browsers
     const ext = f.name.split(".").pop()?.toLowerCase();
     const allowedExts = new Set(["pdf", "jpg", "jpeg", "png", "doc", "docx", "txt"]);
 
@@ -325,7 +324,6 @@ export default function VaultPage() {
             <input
               ref={fileRef}
               type="file"
-              accept="*/*"
               onChange={(e) => handlePick(e.target.files?.[0] ?? null)}
               className="hidden"
               id="vault-file"
