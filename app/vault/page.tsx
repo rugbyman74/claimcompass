@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 import Link from "next/link";
@@ -65,12 +65,6 @@ export default function VaultPage() {
     useState<(typeof CATEGORIES)[number]>("Medical Records");
   const [notes, setNotes] = useState("");
   const [picked, setPicked] = useState<File | null>(null);
-
-  const acceptAttr = useMemo(
-    () =>
-      "application/pdf,image/jpeg,image/jpg,image/png,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain,.pdf,.jpg,.jpeg,.png,.doc,.docx,.txt",
-    []
-  );
 
   const requireSession = async () => {
     const { data: sessionData, error } = await supabase.auth.getSession();
@@ -331,7 +325,7 @@ export default function VaultPage() {
             <input
               ref={fileRef}
               type="file"
-              accept={acceptAttr}
+              accept="*/*"
               onChange={(e) => handlePick(e.target.files?.[0] ?? null)}
               className="hidden"
               id="vault-file"
