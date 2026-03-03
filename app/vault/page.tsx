@@ -18,7 +18,15 @@ type EvidenceFile = {
 };
 
 const MAX_BYTES = 10 * 1024 * 1024; // 10MB
-const ALLOWED_TYPES = new Set(["application/pdf", "image/jpeg", "image/png"]);
+const ALLOWED_TYPES = new Set([
+  "application/pdf",
+  "image/jpeg",
+  "image/png",
+  "image/jpg",
+  "application/msword",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  "text/plain",
+]);
 
 const CATEGORIES = [
   "Medical Records",
@@ -58,7 +66,11 @@ export default function VaultPage() {
   const [notes, setNotes] = useState("");
   const [picked, setPicked] = useState<File | null>(null);
 
-  const acceptAttr = useMemo(() => "application/pdf,image/jpeg,image/png", []);
+  const acceptAttr = useMemo(
+    () =>
+      "application/pdf,image/jpeg,image/jpg,image/png,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain,.pdf,.jpg,.jpeg,.png,.doc,.docx,.txt",
+    []
+  );
 
   const requireSession = async () => {
     const { data: sessionData, error } = await supabase.auth.getSession();
@@ -107,9 +119,13 @@ export default function VaultPage() {
       return;
     }
 
-    if (!ALLOWED_TYPES.has(f.type)) {
+    // Check by extension as fallback for mobile browsers
+    const ext = f.name.split(".").pop()?.toLowerCase();
+    const allowedExts = new Set(["pdf", "jpg", "jpeg", "png", "doc", "docx", "txt"]);
+
+    if (!ALLOWED_TYPES.has(f.type) && !allowedExts.has(ext ?? "")) {
       setPicked(null);
-      setStatus("❌ Only PDF, JPG, or PNG files are allowed.");
+      setStatus("❌ Only PDF, JPG, PNG, DOC, DOCX, or TXT files are allowed.");
       return;
     }
 
@@ -235,7 +251,7 @@ export default function VaultPage() {
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">Evidence Vault</h1>
           <p className="mt-1 text-sm text-zinc-600">
-            Secure document storage (PDF/JPG/PNG, max 10MB).
+            Secure document storage (PDF, JPG, PNG, DOC, DOCX, TXT — max 10MB).
           </p>
         </div>
 
@@ -333,7 +349,7 @@ export default function VaultPage() {
               Choose file
             </label>
 
-            <div className="text-xs text-zinc-500">Allowed: PDF, JPG, PNG. Max 10MB.</div>
+            <div className="text-xs text-zinc-500">Allowed: PDF, JPG, PNG, DOC, DOCX, TXT. Max 10MB.</div>
 
             {picked ? (
               <div className="text-sm text-zinc-700">
