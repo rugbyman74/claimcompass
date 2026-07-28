@@ -5,17 +5,23 @@ import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 
 function parseAdminEmails(raw: string | undefined | null) {
-  return (raw ?? "")
-    .split(",")
-    .map((s) => s.trim().toLowerCase())
-    .filter(Boolean);
+  return (raw?? "")
+   .split(",")
+   .map((s) => s.trim().toLowerCase())
+   .filter(Boolean);
 }
 
-function NavLink({ href, children }: { href: string; children: React.ReactNode }) {
+function NavLink({ href, children, primary = false }: { href: string; children: React.ReactNode; primary?: boolean }) {
   return (
     <Link
       href={href}
-      className="rounded-lg px-3 py-2 text-sm font-medium text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900"
+      className={`
+        px-4 py-2.5 text- font-black tracking-[0.15em] uppercase border transition-all
+        ${primary
+         ? "bg-[#4B5320] border-[#4B5320] text-white hover:bg-[#5A6330]"
+          : "bg-[#1A1A1A] border-[#2A2A2A] text-[#A0A0A0] hover:border-[#4B5320] hover:text-[#E8E8E8]"
+        }
+      `}
     >
       {children}
     </Link>
@@ -25,7 +31,7 @@ function NavLink({ href, children }: { href: string; children: React.ReactNode }
 export default function Nav() {
   const [loggedIn, setLoggedIn] = useState(false);
   const [email, setEmail] = useState<string>("");
-
+  const [mobileOpen, setMobileOpen] = useState(false);
   const isDev = process.env.NODE_ENV === "development";
 
   const adminEmails = useMemo(
@@ -44,16 +50,13 @@ export default function Nav() {
       const { data } = await supabase.auth.getSession();
       const session = data.session;
       setLoggedIn(!!session);
-      setEmail(session?.user?.email ?? "");
+      setEmail(session?.user?.email?? "");
     };
-
     load();
-
     const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
       setLoggedIn(!!session);
-      setEmail(session?.user?.email ?? "");
+      setEmail(session?.user?.email?? "");
     });
-
     return () => sub.subscription.unsubscribe();
   }, []);
 
@@ -63,64 +66,79 @@ export default function Nav() {
   };
 
   return (
-    <header className="sticky top-0 z-50 border-b bg-white/80 backdrop-blur">
-      <div className="mx-auto flex max-w-5xl items-center gap-3 px-4 py-3">
-        <Link href="/" className="flex items-center gap-2">
-          <div className="grid h-9 w-9 place-items-center rounded-xl bg-zinc-900 text-white">
+    <header className="sticky top-0 z-50 border-b border-[#2A2A2A] bg-[#0F0F0F]">
+      <div className="mx-auto flex max-w-6xl items-center gap-4 px-4 py-3">
+        <Link href="/" className="flex items-center gap-3">
+          <div className="grid h-10 w-10 place-items-center bg-[#1A1A1A] border border-[#4B5320] text-[#E8E8E8] font-black text-sm tracking-widest">
             CC
           </div>
           <div className="leading-tight">
-            <div className="text-sm font-semibold tracking-tight">ClaimCompass</div>
-            <div className="text-xs text-zinc-500">VA claim organizer</div>
+            <div className="text- font-black tracking-[0.2em] text-[#E8E8E8] uppercase">ClaimCompass</div>
+            <div className="text- tracking-[0.15em] text-[#4B5320] uppercase font-bold">Tactical Evidence Locker // V1</div>
           </div>
         </Link>
 
-        <nav className="ml-3 hidden items-center gap-1 md:flex">
-          <NavLink href="/dashboard">Dashboard</NavLink>
-          <NavLink href="/log">Symptom Log</NavLink>
-          <NavLink href="/statement">Statement</NavLink>
-          <NavLink href="/vault">Vault</NavLink>
-          <NavLink href="/badges">Badges</NavLink>
-          <NavLink href="/refer">Refer</NavLink>
-          <NavLink href="/about">About</NavLink>
-          <NavLink href="/feedback">Feedback</NavLink>
-          <NavLink href="/account">Account</NavLink>
-          {showDevLink ? <NavLink href="/dev">Dev</NavLink> : null}
+        {/* DESKTOP - PRIMARY LOCKER */}
+        <nav className="ml-8 hidden items-center gap-2 lg:flex">
+          <NavLink href="/dashboard" primary>Command Center</NavLink>
+          <NavLink href="/log">Field Log</NavLink>
+          <NavLink href="/vault">Evidence Vault</NavLink>
+          <NavLink href="/statement">Statement Builder</NavLink>
         </nav>
 
-        <div className="ml-auto flex items-center gap-2">
-          {loggedIn ? (
+        {/* DESKTOP - SYSTEM */}
+        <nav className="hidden items-center gap-2 lg:flex ml-auto">
+          <NavLink href="/account">Account</NavLink>
+          <NavLink href="/refer">Refer</NavLink>
+          {showDevLink? <NavLink href="/dev">Dev</NavLink> : null}
+          {loggedIn? (
             <button
               onClick={logout}
-              className="rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm font-semibold text-zinc-900 hover:bg-zinc-50"
+              className="px-4 py-2.5 text- font-black tracking-[0.15em] uppercase border border-[#C41E3A] bg-[#0F0F0F] text-[#C41E3A] hover:bg-[#C41E3A] hover:text-white"
             >
               Logout
             </button>
           ) : (
             <Link
               href="/login"
-              className="rounded-lg bg-zinc-900 px-3 py-2 text-sm font-semibold text-white hover:bg-zinc-800"
+              className="px-4 py-2.5 text- font-black tracking-[0.15em] uppercase bg-[#E8E8E8] text-[#0F0F0F] hover:bg-white"
             >
               Login
             </Link>
           )}
-        </div>
+        </nav>
+
+        {/* MOBILE TOGGLE */}
+        <button onClick={() => setMobileOpen(!mobileOpen)} className="lg:hidden ml-auto border border-[#2A2A2A] bg-[#1A1A1A] px-3 py-2 text- font-black uppercase text-[#A0A0A0]">
+          {mobileOpen? "CLOSE" : "MENU"}
+        </button>
       </div>
 
-      <div className="mx-auto max-w-5xl px-4 pb-3 md:hidden">
-        <div className="flex flex-wrap gap-2">
-          <NavLink href="/dashboard">Dash</NavLink>
-          <NavLink href="/log">Log</NavLink>
-          <NavLink href="/statement">Statement</NavLink>
-          <NavLink href="/vault">Vault</NavLink>
-          <NavLink href="/badges">Badges</NavLink>
-          <NavLink href="/refer">Refer</NavLink>
-          <NavLink href="/about">About</NavLink>
-          <NavLink href="/feedback">Feedback</NavLink>
-          <NavLink href="/account">Account</NavLink>
-          {showDevLink ? <NavLink href="/dev">Dev</NavLink> : null}
+      {/* MOBILE DRAWER */}
+      {mobileOpen && (
+        <div className="lg:hidden border-t border-[#2A2A2A] bg-[#1A1A1A] px-4 py-4">
+          <div className="grid grid-cols-2 gap-2">
+            <NavLink href="/dashboard" primary>Command Center</NavLink>
+            <NavLink href="/log">Field Log</NavLink>
+            <NavLink href="/vault">Evidence Vault</NavLink>
+            <NavLink href="/statement">Statement Builder</NavLink>
+            <NavLink href="/badges">Badges</NavLink>
+            <NavLink href="/account">Account</NavLink>
+            <NavLink href="/refer">Refer</NavLink>
+            <NavLink href="/about">About</NavLink>
+            <NavLink href="/pricing">Pricing</NavLink>
+            <NavLink href="/feedback">Feedback</NavLink>
+            {showDevLink? <NavLink href="/dev">Dev</NavLink> : null}
+          </div>
+          <div className="mt-4">
+            {loggedIn? (
+              <button onClick={logout} className="w-full border border-[#C41E3A] py-3 text- font-black uppercase text-[#C41E3A]">Logout // {email}</button>
+            ) : (
+              <Link href="/login" className="block w-full bg-[#E8E8E8] py-3 text-center text- font-black uppercase text-[#0F0F0F]">Login</Link>
+            )}
+          </div>
         </div>
-      </div>
+      )}
     </header>
   );
 }

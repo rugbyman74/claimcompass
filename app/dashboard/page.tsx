@@ -35,146 +35,125 @@ export default function DashboardPage() {
         router.replace("/login");
         return;
       }
-
-      const meta = sessionData.session.user.user_metadata ?? {};
-      const name = 
+      const meta = sessionData.session.user.user_metadata?? {};
+      const name =
         (typeof meta.full_name === "string" && meta.full_name.trim()) ||
         (typeof meta.name === "string" && meta.name.trim()) ||
         sessionData.session.user.email?.split("@")[0] ||
-        "there";
-      
-      setUserName(name);
+        "OPERATOR";
 
+      setUserName(name.toUpperCase());
       const pro = await getProStatus();
       setIsPro(pro.isPro);
 
       const { data: logs } = await supabase
-        .from("symptom_logs")
-        .select("id, condition, severity, logged_at")
-        .order("logged_at", { ascending: false })
-        .limit(5);
+       .from("symptom_logs")
+       .select("id, condition, severity, logged_at")
+       .order("logged_at", { ascending: false })
+       .limit(5);
 
-      setRecentLogs((logs ?? []) as SymptomLog[]);
+      setRecentLogs((logs?? []) as SymptomLog[]);
 
       const { data: badgeData } = await supabase
-        .from("user_badges")
-        .select("badge_id, badges(id, name, description, icon)")
-        .eq("user_id", sessionData.session.user.id)
-        .limit(3);
+       .from("user_badges")
+       .select("badge_id, badges(id, name, description, icon)")
+       .eq("user_id", sessionData.session.user.id)
+       .limit(3);
 
-      const earnedBadges = (badgeData ?? [])
-        .map((b: any) => b.badges)
-        .filter(Boolean) as Badge[];
+      const earnedBadges = (badgeData?? [])
+       .map((b: any) => b.badges)
+       .filter(Boolean) as Badge[];
 
       setBadges(earnedBadges);
       setLoading(false);
     };
-
     load();
   }, [router]);
 
   if (loading) {
     return (
-      <div className="flex min-h-[60vh] items-center justify-center">
-        <div className="text-sm text-zinc-600">Loading dashboard...</div>
+      <div className="flex min-h- items-center justify-center">
+        <div className="text- font-black tracking-[0.2em] uppercase text-[#6B7280] border border-[#2A2A2A] px-6 py-3 bg-[#1A1A1A]">
+          LOADING COMMAND CENTER...
+        </div>
       </div>
     );
   }
 
   return (
     <div className="grid gap-6">
-      <div className="flex flex-wrap items-end justify-between gap-4">
+      {/* HEADER */}
+      <div className="flex flex-wrap items-end justify-between gap-4 border-b border-[#2A2A2A] pb-6">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Welcome, {userName}!</h1>
-          <p className="mt-1 text-sm text-zinc-600">
-            Track your progress and manage your VA claim evidence.
+          <div className="text- font-black tracking-[0.3em] text-[#4B5320] uppercase mb-2">Command Center // Active</div>
+          <h1 className="text-3xl font-black tracking-[0.1em] uppercase text-[#E8E8E8]">Welcome, {userName}</h1>
+          <p className="mt-2 text-xs tracking-[0.1em] uppercase text-[#6B7280]">
+            Evidence Locker Online // Mission: Build Consistent Trail
           </p>
         </div>
-
-        <div className="text-sm">
-          {isPro ? (
-            <span className="rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-emerald-700">
-              Plan: Pro
+        <div>
+          {isPro? (
+            <span className="border border-[#4B5320] bg-[#1A1A1A] px-4 py-2 text- font-black tracking-[0.15em] uppercase text-[#4B5320]">
+              Plan: Pro // Active
             </span>
           ) : (
-            <Link
-              href="/pricing"
-              className="rounded-full border border-zinc-200 bg-white px-3 py-1 font-semibold text-zinc-900 hover:bg-zinc-50"
-            >
+            <Link href="/pricing" className="border border-[#E8E8E8] bg-[#E8E8E8] px-4 py-2 text- font-black tracking-[0.15em] uppercase text-[#0F0F0F] hover:bg-white">
               Upgrade to Pro
             </Link>
           )}
         </div>
       </div>
 
+      {/* QUICK ACTIONS - Pelican Bays */}
       <section className="grid gap-4 md:grid-cols-3">
-        <Link
-          href="/log"
-          className="rounded-2xl border bg-white p-6 shadow-sm transition-all hover:shadow-md"
-        >
-          <div className="text-3xl">📝</div>
-          <h3 className="mt-3 text-lg font-semibold">Log Symptoms</h3>
-          <p className="mt-2 text-sm text-zinc-600">
-            Track your daily symptoms and mood.
-          </p>
+        <Link href="/log" className="group border border-[#2A2A2A] bg-[#1A1A1A] p-6 hover:border-[#4B5320] transition-colors">
+          <div className="text- font-black tracking-[0.2em] text-[#4B5320] mb-3">BAY 01 // FIELD OPS</div>
+          <div className="text- font-black tracking-[0.15em] uppercase text-[#E8E8E8]">Log Symptoms</div>
+          <div className="mt-2 text- leading-5 text-[#A0A0A0]">Daily entries build your trail.</div>
+          <div className="mt-4 text- font-black tracking-[0.15em] uppercase text-[#6B7280] group-hover:text-[#4B5320]">EXECUTE →</div>
         </Link>
 
-        <Link
-          href="/statement"
-          className="rounded-2xl border bg-white p-6 shadow-sm transition-all hover:shadow-md"
-        >
-          <div className="text-3xl">📄</div>
-          <h3 className="mt-3 text-lg font-semibold">Generate Statement</h3>
-          <p className="mt-2 text-sm text-zinc-600">
-            Create professional claim statements.
-          </p>
+        <Link href="/statement" className="group border border-[#2A2A2A] bg-[#1A1A1A] p-6 hover:border-[#4B5320] transition-colors">
+          <div className="text- font-black tracking-[0.2em] text-[#4B5320] mb-3">BAY 02 // OUTPUT</div>
+          <div className="text- font-black tracking-[0.15em] uppercase text-[#E8E8E8]">Generate Statement</div>
+          <div className="mt-2 text- leading-5 text-[#A0A0A0]">Professional statements for raters.</div>
+          <div className="mt-4 text- font-black tracking-[0.15em] uppercase text-[#6B7280] group-hover:text-[#4B5320]">EXECUTE →</div>
         </Link>
 
-        <Link
-          href="/vault"
-          className="rounded-2xl border bg-white p-6 shadow-sm transition-all hover:shadow-md"
-        >
-          <div className="text-3xl">🗂️</div>
-          <h3 className="mt-3 text-lg font-semibold">Evidence Vault</h3>
-          <p className="mt-2 text-sm text-zinc-600">
-            Store medical records securely.
-          </p>
+        <Link href="/vault" className="group border border-[#2A2A2A] bg-[#1A1A1A] p-6 hover:border-[#4B5320] transition-colors">
+          <div className="text- font-black tracking-[0.2em] text-[#4B5320] mb-3">BAY 03 // STORAGE</div>
+          <div className="text- font-black tracking-[0.15em] uppercase text-[#E8E8E8]">Evidence Vault</div>
+          <div className="mt-2 text- leading-5 text-[#A0A0A0]">Medical records, DBQs, nexus.</div>
+          <div className="mt-4 text- font-black tracking-[0.15em] uppercase text-[#6B7280] group-hover:text-[#4B5320]">OPEN →</div>
         </Link>
       </section>
 
-      <section className="rounded-2xl border bg-white p-6 shadow-sm">
-        <div className="flex items-end justify-between gap-4">
+      {/* RECENT LOGS - Tactical Table */}
+      <section className="border border-[#2A2A2A] bg-[#1A1A1A]">
+        <div className="flex items-end justify-between gap-4 border-b border-[#2A2A2A] p-6">
           <div>
-            <h2 className="text-lg font-semibold tracking-tight">Recent Symptom Logs</h2>
-            <p className="mt-1 text-sm text-zinc-600">
-              Your last 5 entries
-            </p>
+            <h2 className="text- font-black tracking-[0.2em] uppercase text-[#E8E8E8]">Recent Field Logs</h2>
+            <p className="mt-1 text- tracking-[0.15em] uppercase text-[#6B7280]">Last 5 Entries // Most Recent First</p>
           </div>
-          <Link
-            href="/log"
-            className="rounded-lg border border-zinc-200 bg-white px-4 py-2 text-sm font-semibold text-zinc-900 hover:bg-zinc-50"
-          >
+          <Link href="/log" className="border border-[#2A2A2A] bg-[#0F0F0F] px-3 py-2 text- font-black tracking-[0.15em] uppercase text-[#A0A0A0] hover:text-[#E8E8E8]">
             View All
           </Link>
         </div>
 
-        {recentLogs.length === 0 ? (
-          <div className="mt-4 rounded-xl border border-dashed p-6 text-sm text-zinc-600">
-            No symptom logs yet. Start tracking to build your evidence!
+        {recentLogs.length === 0? (
+          <div className="m-4 border border-dashed border-[#2A2A2A] p-6 text- tracking-wide text-[#6B7280]">
+            No field logs yet. Start logging to build your evidence trail.
           </div>
         ) : (
-          <div className="mt-4 grid gap-3">
+          <div className="divide-y divide-[#2A2A2A]">
             {recentLogs.map((log) => (
-              <div
-                key={log.id}
-                className="flex items-center justify-between rounded-lg border p-3"
-              >
+              <div key={log.id} className="flex items-center justify-between p-4">
                 <div>
-                  <div className="font-medium">{log.condition}</div>
-                  <div className="text-sm text-zinc-500">{log.logged_at}</div>
+                  <div className="text- font-bold tracking-wide uppercase text-[#E8E8E8]">{log.condition}</div>
+                  <div className="text- tracking-[0.1em] text-[#6B7280] mt-1">{new Date(log.logged_at).toLocaleString()}</div>
                 </div>
-                <div className="rounded-full bg-zinc-100 px-3 py-1 text-sm font-semibold">
-                  {log.severity}/10
+                <div className="border border-[#4B5320] bg-[#0F0F0F] px-3 py-1 text- font-black text-[#4B5320]">
+                  SEV {log.severity}/10
                 </div>
               </div>
             ))}
@@ -182,36 +161,29 @@ export default function DashboardPage() {
         )}
       </section>
 
-      <section className="rounded-2xl border bg-white p-6 shadow-sm">
-        <div className="flex items-end justify-between gap-4">
+      {/* BADGES - Tactical Patches */}
+      <section className="border border-[#2A2A2A] bg-[#1A1A1A]">
+        <div className="flex items-end justify-between gap-4 border-b border-[#2A2A2A] p-6">
           <div>
-            <h2 className="text-lg font-semibold tracking-tight">Recent Badges</h2>
-            <p className="mt-1 text-sm text-zinc-600">
-              Your latest achievements
-            </p>
+            <h2 className="text- font-black tracking-[0.2em] uppercase text-[#E8E8E8]">Earned Patches</h2>
+            <p className="mt-1 text- tracking-[0.15em] uppercase text-[#6B7280]">Mission Progress</p>
           </div>
-          <Link
-            href="/badges"
-            className="rounded-lg border border-zinc-200 bg-white px-4 py-2 text-sm font-semibold text-zinc-900 hover:bg-zinc-50"
-          >
+          <Link href="/badges" className="border border-[#2A2A2A] bg-[#0F0F0F] px-3 py-2 text- font-black tracking-[0.15em] uppercase text-[#A0A0A0] hover:text-[#E8E8E8]">
             View All
           </Link>
         </div>
 
-        {badges.length === 0 ? (
-          <div className="mt-4 rounded-xl border border-dashed p-6 text-sm text-zinc-600">
-            No badges earned yet. Keep logging to earn achievements!
+        {badges.length === 0? (
+          <div className="m-4 border border-dashed border-[#2A2A2A] p-6 text- tracking-wide text-[#6B7280]">
+            No patches earned yet. Keep logging to earn tactical patches.
           </div>
         ) : (
-          <div className="mt-4 grid gap-3 md:grid-cols-3">
+          <div className="grid gap-0 md:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-[#2A2A2A]">
             {badges.map((badge) => (
-              <div
-                key={badge.id}
-                className="rounded-xl border bg-gradient-to-br from-blue-50 to-purple-50 p-4"
-              >
-                <div className="text-3xl">{badge.icon}</div>
-                <div className="mt-2 font-semibold">{badge.name}</div>
-                <div className="mt-1 text-xs text-zinc-600">{badge.description}</div>
+              <div key={badge.id} className="p-6">
+                <div className="text- font-black tracking-[0.2em] text-[#4B5320] uppercase">{badge.icon} PATCH</div>
+                <div className="mt-2 text- font-black tracking-[0.1em] uppercase text-[#E8E8E8]">{badge.name}</div>
+                <div className="mt-1 text- leading-4 text-[#6B7280]">{badge.description}</div>
               </div>
             ))}
           </div>

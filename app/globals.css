@@ -1,8 +1,16 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --tactical-black: #0F0F0F;
+  --tactical-charcoal: #1A1A1A;
+  --gunmetal: #2A2A2A;
+  --od-green: #4B5320;
+  --od-green-bright: #5A6330;
+  --chrome: #E8E8E8;
+  --steel: #A0A0A0;
+  --signal-red: #C41E3A;
+  --background: #0F0F0F;
+  --foreground: #E8E8E8;
 }
 
 @theme inline {
@@ -12,20 +20,15 @@
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: #0F0F0F;
+  color: #E8E8E8;
+  font-family: 'Inter', Arial, Helvetica, sans-serif;
   position: relative;
+  min-height: 100vh;
 }
 
+/* Subtle tactical texture - not flag stripes */
 body::before {
   content: "";
   position: fixed;
@@ -34,81 +37,59 @@ body::before {
   width: 100%;
   height: 100%;
   z-index: -1;
-  opacity: 0.12;
-  background: 
-    linear-gradient(135deg, 
-      #B22234 0%, 
-      #B22234 7%,
-      #FFFFFF 7%, 
-      #FFFFFF 14%,
-      #B22234 14%, 
-      #B22234 21%,
-      #FFFFFF 21%, 
-      #FFFFFF 28%,
-      #B22234 28%, 
-      #B22234 35%,
-      #FFFFFF 35%, 
-      #FFFFFF 42%,
-      #B22234 42%, 
-      #B22234 49%,
-      #3C3B6E 49%, 
-      #3C3B6E 100%
-    );
-  pointer-events: none;
-}
-
-body::after {
-  content: "";
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  z-index: -1;
-  opacity: 0.06;
+  opacity: 0.04;
   background-image: 
-    repeating-linear-gradient(0deg, transparent, transparent 35px, rgba(178, 34, 52, 0.2) 35px, rgba(178, 34, 52, 0.2) 70px),
-    repeating-linear-gradient(90deg, transparent, transparent 35px, rgba(60, 59, 110, 0.2) 35px, rgba(60, 59, 110, 0.2) 70px);
+    repeating-linear-gradient(0deg, transparent, transparent 40px, rgba(75, 83, 32, 0.5) 40px, rgba(75, 83, 32, 0.5) 41px),
+    repeating-linear-gradient(90deg, transparent, transparent 40px, rgba(75, 83, 32, 0.3) 40px, rgba(75, 83, 32, 0.3) 41px);
   pointer-events: none;
 }
 
-/* Mobile enhancement - more visible background */
-@media (max-width: 768px) {
-  body::before {
-    opacity: 0.18;
-  }
-  
-  body::after {
-    opacity: 0.09;
-  }
+/* TACTICAL BUTTONS */
+.btn-tactical-primary {
+  background: #0F0F0F;
+  border: 1.5px solid #4B5320;
+  color: #E8E8E8;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 700;
+}
+.btn-tactical-primary:hover {
+  background: #4B5320;
+  color: #FFFFFF;
 }
 
-/* Make input text darker and more readable */
+.btn-tactical-ghost {
+  background: transparent;
+  border: 1px solid #2A2A2A;
+  color: #A0A0A0;
+}
+
+/* TACTICAL CARDS */
+.card-tactical {
+  background: #1A1A1A;
+  border: 1px solid #2A2A2A;
+  border-left: 3px solid #4B5320;
+}
+
+/* Make input text readable on dark */
 input,
 textarea,
 select {
-  color: #000000 !important;
-  -webkit-text-fill-color: #000000 !important;
-  opacity: 1 !important;
+  background: #1A1A1A !important;
+  border: 1px solid #2A2A2A !important;
+  color: #E8E8E8 !important;
+  -webkit-text-fill-color: #E8E8E8 !important;
 }
 
-/* Ensure placeholder text is still lighter */
 input::placeholder,
 textarea::placeholder {
-  color: #9ca3af !important;
-  -webkit-text-fill-color: #9ca3af !important;
-  opacity: 1 !important;
+  color: #6B7280 !important;
+  -webkit-text-fill-color: #6B7280 !important;
 }
 
-/* Fix for autofill text color */
 input:-webkit-autofill,
-input:-webkit-autofill:hover,
-input:-webkit-autofill:focus,
 textarea:-webkit-autofill,
-textarea:-webkit-autofill:hover,
-textarea:-webkit-autofill:focus,
-select:-webkit-autofill,
-select:-webkit-autofill:hover,
-select:-webkit-autofill:focus {
-  -webkit-text-fill-color: #000000 !important;
+select:-webkit-autofill {
+  -webkit-text-fill-color: #E8E8E8 !important;
+  -webkit-box-shadow: 0 0 0 1000px #1A1A1A inset !important;
 }

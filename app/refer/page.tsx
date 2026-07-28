@@ -11,114 +11,66 @@ export default function ReferPage() {
 
   const link = useMemo(() => {
     if (!code) return "";
-    // window only exists on client; this page is client
     return `${window.location.origin}/login?ref=${encodeURIComponent(code)}`;
   }, [code]);
 
   useEffect(() => {
     const load = async () => {
       setStatus("");
-
       const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
-      if (sessionError) {
-        setStatus("❌ Session error: " + sessionError.message);
-        return;
-      }
-
+      if (sessionError) { setStatus("Session error: " + sessionError.message); return; }
       const session = sessionData.session;
-      if (!session) {
-        router.replace("/login");
-        return;
-      }
-
-      // Try to read your profile row
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("referral_code")
-        .eq("user_id", session.user.id)
-        .maybeSingle();
-
-      if (error) {
-        setStatus("❌ Could not load referral code: " + error.message);
-        return;
-      }
-
-      if (data?.referral_code) {
-        setCode(data.referral_code);
-        return;
-      }
-
-      // If no row exists (older account), create it client-side:
-      // (RLS allows update/select; insert isn’t enabled for clients, so we show a helpful message.)
-      setStatus(
-        "⚠️ Referral code missing for this account. Run the one-time ‘backfill profiles’ SQL in Supabase, then refresh this page."
-      );
+      if (!session) { router.replace("/login"); return; }
+      const { data, error } = await supabase.from("profiles").select("referral_code").eq("user_id", session.user.id).maybeSingle();
+      if (error) { setStatus("Could not load referral code: " + error.message); return; }
+      if (data?.referral_code) { setCode(data.referral_code); return; }
+      setStatus("Referral code missing. Run backfill profiles SQL in Supabase, then refresh.");
     };
-
     load();
   }, [router]);
 
   const copy = async () => {
     if (!link) return;
-    try {
-      await navigator.clipboard.writeText(link);
-      setStatus("✅ Copied referral link.");
-    } catch {
-      setStatus("❌ Could not copy. You can select the link and copy manually.");
-    }
+    try { await navigator.clipboard.writeText(link); setStatus("Copied referral link // Ready to deploy."); }
+    catch { setStatus("Could not copy. Select link manually."); }
   };
 
   return (
     <div className="mx-auto max-w-2xl">
-      <h1 className="text-2xl font-semibold tracking-tight">Refer a friend</h1>
-      <p className="mt-2 text-sm text-zinc-600">
-        Share your referral link. When your friend signs up using it, we’ll record the referral.
-      </p>
+      <div className="border-b border-[#2A2A2A] pb-6">
+        <div className="text- font-black tracking-[0.3em] text-[#4B5320] uppercase">Recruit // Referral Ops // V1</div>
+        <h1 className="mt-2 text-3xl font-black tracking-[0.1em] uppercase text-[#E8E8E8]">Refer A Friend // Recruit</h1>
+        <p className="mt-2 text- uppercase tracking-[0.15em] text-[#6B7280]">Share Link // Squad Up // Record Referral</p>
+      </div>
 
-      <div className="mt-6 rounded-2xl border bg-white p-6 shadow-sm space-y-4">
-        <div className="text-sm text-zinc-700">
-          <div className="text-xs font-medium text-zinc-700">Your referral code</div>
-          <div className="mt-1 rounded-lg border bg-zinc-50 px-3 py-2 font-semibold tracking-wider">
-            {code || "—"}
+      <div className="mt-8 border border-[#2A2A2A] bg-[#1A1A1A] p-6 space-y-6">
+        <div className="grid gap-6 md:grid-cols-2">
+          <div>
+            <div className="text- font-black tracking-[0.2em] uppercase text-[#6B7280]">Your Referral Code // Callsign</div>
+            <div className="mt-2 border border-[#2A2A2A] bg-[#0F0F0F] px-4 py-3 font-mono text-sm font-black tracking-[0.2em] text-[#E8C87A]">{code || "—"}</div>
+          </div>
+          <div>
+            <div className="text- font-black tracking-[0.2em] uppercase text-[#6B7280]">Status // Ops</div>
+            <div className="mt-2 border border-[#4B5320]/30 bg-[#0F0F0F] px-4 py-3 text- uppercase tracking-[0.1em] text-[#4B5320]">Active // Ready To Deploy</div>
           </div>
         </div>
 
-        <div className="text-sm text-zinc-700">
-          <div className="text-xs font-medium text-zinc-700">Your referral link</div>
-          <input
-            readOnly
-            value={link || ""}
-            className="mt-1 w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm outline-none"
-          />
+        <div>
+          <div className="text- font-black tracking-[0.2em] uppercase text-[#6B7280]">Your Referral Link // Exfil Route</div>
+          <input readOnly value={link || ""} className="mt-2 w-full border border-[#2A2A2A] bg-[#0F0F0F] px-3 py-3 font-mono text-sm text-[#E8E8E8] outline-none focus:border-[#4B5320]" placeholder="Generating link..." />
         </div>
 
-        <div className="flex flex-wrap items-center gap-3">
-          <button
-            onClick={copy}
-            disabled={!link}
-            className="rounded-lg bg-zinc-900 px-4 py-2 text-sm font-semibold text-white hover:bg-zinc-800 disabled:opacity-50"
-          >
-            Copy link
-          </button>
-
-          {status ? (
-            <div
-              className={`rounded-lg border px-3 py-2 text-sm ${
-                status.startsWith("❌")
-                  ? "border-red-200 bg-red-50 text-red-700"
-                  : status.startsWith("⚠️")
-                  ? "border-amber-200 bg-amber-50 text-amber-800"
-                  : "border-emerald-200 bg-emerald-50 text-emerald-700"
-              }`}
-            >
-              {status}
-            </div>
-          ) : null}
+        <div className="flex flex-wrap items-center gap-3 border-t border-[#2A2A2A] pt-6">
+          <button onClick={copy} disabled={!link} className="bg-[#4B5320] px-6 py-2.5 text- font-black uppercase tracking-[0.15em] text-white hover:bg-[#5A6330] disabled:opacity-50">Copy Link // Copy Exfil</button>
+          {status? <div className="border border-[#2A2A2A] bg-[#0F0F0F] px-3 py-2 text- font-black uppercase tracking-[0.05em] text-[#E8C87A]">{status}</div> : null}
         </div>
 
-        <div className="text-xs text-zinc-500">
-          Tip: Share by text or email. The referral is “claimed” after your friend creates an account and logs in.
-        </div>
+        <div className="border border-[#2A2A2A]/50 bg-[#0F0F0F] p-3 text- uppercase tracking-[0.1em] text-[#555]">Tip: Share By Text Or Email. Referral Is Claimed After Friend Creates Account And Logs In. // Recruit Protocol</div>
+      </div>
+
+      <div className="mt-6 border border-[#4B5320]/20 bg-[#1A1A1A] p-4">
+        <div className="text- font-black uppercase tracking-[0.2em] text-[#4B5320]">Mission // Why Recruit</div>
+        <p className="mt-2 text- leading-5 text-[#A0A0A0]">Built by a veteran for veterans. More operators with organized evidence = more wins. No data selling. Just helping squad get benefits earned.</p>
       </div>
     </div>
   );
