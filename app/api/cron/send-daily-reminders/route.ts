@@ -48,7 +48,7 @@ export async function GET(req: Request) {
         if (shouldSend) {
           try {
             await resend.emails.send({
-              from: "ClaimCompass <onboarding@resend.dev>",
+              from: "ClaimCompass <reminder@resend.dev>",
               to: user.email,
               subject: "Don't forget to log Your Symptoms Today",
               html: `
