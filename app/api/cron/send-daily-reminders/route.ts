@@ -53,5 +53,38 @@ export async function GET(req: Request) {
               subject: "Daily SITREP: Log Your Symptoms",
               html: `
 <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-  <h2 style="color: #3C3B6E;">SITREP, ${profile.full_name?.split(' ')[0] || 'Warrior'} 🫡</h2>
-  <p><strong>Mission: Document your symptoms.</strong></p
+  <h2 style="color: #3C3B6E;">SITREP, ${profile.full_name?.split(" ")[0] || "Warrior"}</h2>
+  <p><strong>Mission: Document your symptoms.</strong></p>
+  <p>VA doesn't award what you don't document. Every log entry is evidence. Evidence wins claims.</p>
+  <p>Take 2 minutes now and get it on record.</p>
+  <div style="margin: 30px 0;">
+    <a href="https://claimcompass.net/log" style="background-color: #3C3B6E; color: white; padding: 14px 28px; text-decoration: none; border-radius: 6px; display: inline-block; font-weight: bold;">
+      LOG SITREP NOW
+    </a>
+  </div>
+  <p style="color: #666; font-size: 14px;">
+    Manage alerts in <a href="https://claimcompass.net/account">account settings</a>. Stay in the fight.
+  </p>
+</div>
+`,
+            });
+            emailsSent++;
+          } catch (err: any) {
+            console.error("Send error:", err);
+            errors.push({ email: user.email, error: err.message });
+          }
+        }
+      }
+    }
+
+    return NextResponse.json({
+      success: true,
+      emailsSent,
+      totalUsersChecked: profiles.length,
+      errors: errors.length > 0? errors : undefined,
+    });
+  } catch (err: any) {
+    console.error("Cron error:", err);
+    return NextResponse.json({ error: err.message }, { status: 500 });
+  }
+}
