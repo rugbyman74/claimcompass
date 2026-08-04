@@ -8,7 +8,7 @@ export async function POST(req: Request) {
     const { feedbackType, message, userEmail } = await req.json();
 
     const { data, error } = await resend.emails.send({
-      from: "ClaimCompass <onboarding@resend.dev>",
+      from: "ClaimCompass <onboarding@send.claimcompass.net>",
       to: "rugbyman74@gmail.com",
       subject: `New Feedback: ${feedbackType}`,
       html: `
