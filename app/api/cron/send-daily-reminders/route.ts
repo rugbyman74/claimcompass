@@ -50,26 +50,29 @@ export async function GET(req: Request) {
             await resend.emails.send({
               from: "ClaimCompass <onboarding@claimcompass.net>",
               to: user.email,
-              subject: "Don't forget to log Your Symptoms Today",
-              html: `
-                <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-                  <h2 style="color: #3C3B6E;">Hi ${profile.full_name || "there"}! 👋</h2>
-                  
-                  <p>This is your daily reminder to log your symptoms in ClaimCompass.</p>
-                  
-                  <p><strong>Consistency is key!</strong> Regular symptom tracking builds stronger evidence for your VA claim.</p>
-                  
-                  <div style="margin: 30px 0;">
-                    <a href="https://claimcompass.net/log" 
-                       style="background-color: #3C3B6E; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block;">
-                      Log Symptoms Now
-                    </a>
-                  </div>
-                  
-                  <p style="color: #666; font-size: 14px;">
-                    You can manage your reminder settings in your <a href="https://claimcompass.net/account">account settings</a>.
-                  </p>
-                </div>
+                    subject: "Daily SITREP: Log Your Symptoms",
+      html: `
+<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+  <h2 style="color: #3C3B6E;">SITREP, ${profile.full_name?.split(' ')[0] || 'Warrior'} 🫡</h2>
+  
+  <p><strong>Mission: Document your symptoms.</strong></p>
+  
+  <p>VA doesn't award what you don't document. Every log entry is evidence. Evidence wins claims.</p>
+  
+  <p>Take 2 minutes now and get it on record.</p>
+  
+  <div style="margin: 30px 0;">
+    <a href="https://claimcompass.net/log" 
+       style="background-color: #3C3B6E; color: white; padding: 14px 28px; text-decoration: none; border-radius: 6px; display: inline-block; font-weight: bold;">
+      LOG SITREP NOW
+    </a>
+  </div>
+  
+  <p style="color: #666; font-size: 14px;">
+    Manage alerts in <a href="https://claimcompass.net/account">account settings</a>. Stay in the fight.
+  </p>
+</div>
+`,
               `,
             });
             emailsSent++;
