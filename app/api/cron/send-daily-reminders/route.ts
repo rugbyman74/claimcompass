@@ -56,7 +56,7 @@ export async function GET(req: Request) {
       if (!shouldSend) continue;
 
       try {
-        await resend.emails.send({
+        const { data: sent } = await resend.emails.send({
           from: "Squad Leader <squad@claimcompass.net>",
           to: user.email,
           subject: "Daily SITREP: Log Your Symptoms",
@@ -70,12 +70,28 @@ export async function GET(req: Request) {
           status: 'sent'
         });
 
+        await supabaseAdmin.from("email_logs").insert({
+          user_id: profile.user_id,
+          email: user.email,
+          type: 'daily_reminder',
+          status: 'sent',
+          resend_id: sent?.id || null
+        });
+
         emailsSent++;
       } catch (err: any) {
         await supabaseAdmin.from("reminder_logs").insert({
           user_id: profile.user_id,
           email: user.email,
           timezone_used: userTimezone,
+          status: 'failed',
+          error_message: err.message
+        });
+
+        await supabaseAdmin.from("email_logs").insert({
+          user_id: profile.user_id,
+          email: user.email,
+          type: 'daily_reminder',
           status: 'failed',
           error_message: err.message
         });
